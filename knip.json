@@ -1,0 +1,44 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": [
+    "src/app/**/page.tsx",
+    "src/app/**/layout.tsx",
+    "src/app/**/loading.tsx",
+    "src/app/**/error.tsx",
+    "src/app/**/not-found.tsx",
+    "src/app/**/route.ts",
+    "src/app/proxy.ts"
+  ],
+  "project": ["src/**/*.{ts,tsx}"],
+  "ignore": [
+    "src/test/**",
+    "src/stories/**",
+    "**/*.test.{ts,tsx}",
+    "**/*.stories.{ts,tsx}",
+    "src/components/ui/**",
+    "src/constants/index.ts",
+    "src/types/index.ts",
+    "src/lib/utils.ts",
+    "src/lib/auth.ts"
+  ],
+  "ignoreDependencies": [
+    "@tailwindcss/postcss",
+    "prettier-plugin-tailwindcss",
+    "@ianvs/prettier-plugin-sort-imports",
+    "@neondatabase/serverless",
+    "@prisma/client-runtime-utils",
+    "@radix-ui/react-slot",
+    "class-variance-authority",
+    "clsx",
+    "radix-ui",
+    "tailwind-merge",
+    "@testing-library/dom",
+    "@testing-library/react",
+    "@testing-library/user-event",
+    "eslint-config-next",
+    "eslint-import-resolver-typescript",
+    "lint-staged",
+    "tailwindcss"
+  ],
+  "ignoreBinaries": ["storybook"]
+}

@@ -1,0 +1,27 @@
+#!/usr/bin/env sh
+
+# 1. Branch name validation
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+PATTERN="^(main|develop|f|b|r|s|a|d|feat|bugfix|refactor|style|add|docs|config|chore)\/[a-z]+\/[a-z0-9-]+$"
+
+if [ "$BRANCH" != "main" ] && [ "$BRANCH" != "develop" ]; then
+  if ! echo "$BRANCH" | grep -qE "$PATTERN"; then
+    echo "❌ Branch name must match: {level}/{name}/{keyword} (e.g., f/jeh/cart)"
+    exit 1
+  fi
+fi
+
+# 2. Prevent .env commit
+if git diff --cached --name-only | grep -q '\.env'; then
+  echo "❌ .env files must not be committed"
+  exit 1
+fi
+
+# 3. Knip (unused code check)
+pnpm knip
+
+# 4. TypeScript type check
+pnpm type-check
+
+# 5. lint-staged (ESLint + Prettier)
+pnpm exec lint-staged
