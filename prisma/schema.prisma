@@ -11,14 +11,19 @@ datasource db {
 
 model User {
   id            String    @id @default(cuid())
+  userId        String    @unique
   name          String?
   email         String    @unique
   emailVerified DateTime?
   image         String?
   password      String?
+  nickname      String    @unique
+  experience    Int       @default(0)
+  status        String    @default("ACTIVE")
   accounts      Account[]
   sessions      Session[]
-  reviews       Review[]
+  likes         Like[]
+  ranks         Rank[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -65,47 +70,79 @@ model VerificationToken {
 
 // ─── Game Platform Models ───────────────────────────────────
 
-model Category {
-  id    String @id @default(cuid())
-  name  String @unique
-  slug  String @unique
-  games Game[]
+model Genre {
+  id          String   @id @default(cuid())
+  genreCode   String   @unique
+  genreName   String
+  description String?
+  status      String   @default("ACTIVE")
+  games       Game[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  @@map("categories")
+  @@map("genres")
 }
 
 model Game {
   id          String   @id @default(cuid())
-  title       String
-  slug        String   @unique
-  description String
-  thumbnail   String
-  buildUrl    String
-  categoryId  String
-  category    Category @relation(fields: [categoryId], references: [id])
-  reviews     Review[]
-  playCount   Int      @default(0)
-  isPublished Boolean  @default(false)
+  gameCode    String   @unique
+  genreCode   String
+  gameName    String
+  description String?
+  url         String
+  thumbnail   String?
+  likeCount   Int      @default(0)
+  status      String   @default("ACTIVE")
+  genre       Genre    @relation(fields: [genreCode], references: [genreCode])
+  likes       Like[]
+  ranks       Rank[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  @@index([categoryId])
-  @@index([isPublished])
+  @@index([genreCode])
+  @@index([status])
   @@map("games")
 }
 
-model Review {
-  id        String   @id @default(cuid())
-  rating    Int
-  content   String?
+model Like {
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   gameId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([userId, gameId])
+  @@map("likes")
+}
+
+model Rank {
+  gameId    String
+  userId    String
+  nickname  String
+  score     Int
+  status    String   @default("ACTIVE")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([userId, gameId])
+  @@id([gameId, userId])
+  @@index([gameId, score(sort: Desc)])
+  @@map("ranks")
+}
+
+model History {
+  id        String   @id @default(cuid())
+  userId    String
+  gameId    String
+  nickname  String
+  gameName  String
+  eventType String
+  payload   Json?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
   @@index([gameId])
-  @@map("reviews")
+  @@index([createdAt])
+  @@map("histories")
 }

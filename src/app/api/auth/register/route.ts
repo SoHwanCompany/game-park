@@ -1,3 +1,5 @@
+import crypto from 'node:crypto';
+
 import bcrypt from 'bcryptjs';
 import { type NextRequest } from 'next/server';
 
@@ -31,11 +33,14 @@ export const POST = async (request: NextRequest): Promise<Response> => {
         email,
         password: hashedPassword,
         name,
+        userId: crypto.randomUUID(),
+        nickname: name,
       },
       select: {
         id: true,
         email: true,
         name: true,
+        nickname: true,
       },
     });
 
