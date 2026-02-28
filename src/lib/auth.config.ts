@@ -1,11 +1,7 @@
-import bcrypt from 'bcryptjs';
 import { type NextAuthConfig } from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import Google from 'next-auth/providers/google';
 import Kakao from 'next-auth/providers/kakao';
-
-import { prisma } from '@/lib/prisma';
-import { loginSchema } from '@/app/(auth)/_schemas/auth';
 
 export const authConfig = {
   providers: [
@@ -22,33 +18,7 @@ export const authConfig = {
         email: { label: '이메일', type: 'email' },
         password: { label: '비밀번호', type: 'password' },
       },
-      authorize: async (credentials) => {
-        const parsed = loginSchema.safeParse(credentials);
-
-        if (!parsed.success) {
-          return null;
-        }
-
-        const user = await prisma.user.findUnique({
-          where: { email: parsed.data.email },
-        });
-
-        if (!user?.password) {
-          return null;
-        }
-
-        if (user.status === 'WITHDRAWN') {
-          return null;
-        }
-
-        const isValid = await bcrypt.compare(parsed.data.password, user.password);
-
-        if (!isValid) {
-          return null;
-        }
-
-        return { id: user.id, email: user.email, name: user.nickname, image: user.profileUrl };
-      },
+      authorize: () => null,
     }),
   ],
   pages: {
@@ -56,22 +26,6 @@ export const authConfig = {
     newUser: '/register',
   },
   callbacks: {
-    signIn: async ({ user }) => {
-      if (!user.id) {
-        return true;
-      }
-
-      const dbUser = await prisma.user.findUnique({
-        where: { id: user.id },
-        select: { status: true },
-      });
-
-      if (dbUser?.status === 'WITHDRAWN') {
-        return false;
-      }
-
-      return true;
-    },
     jwt: ({ token, user }) => {
       if (user) {
         token.id = user.id;
