@@ -2,6 +2,14 @@
 
 코드 작성 시 이 파일의 규칙을 따른다.
 
+## 프로젝트 개요
+
+Game Park는 브라우저 기반 웹 게임 플랫폼이다.
+
+- 게임은 별도 React 레포에서 제작 → S3 업로드 → CloudFront CDN → iframe으로 플랫폼에 로드
+- 디자이너가 없어 AI 주도 UI 워크플로우 사용 (`/code:design`, `docs/design-system.md`)
+- 게임-플랫폼 간 postMessage API로 통신 (`docs/game-integration.md`)
+
 > **코드 작업 프로토콜** — 코드를 생성·수정할 때 반드시 따른다:
 >
 > 1. `docs/coding-conventions.md`를 **Read 도구로 읽는다** (코드 예시·상세 규칙 확인)
@@ -38,6 +46,33 @@ pnpm test:e2e:headed   # 실제 Chrome 창이 열리며 실행
 pnpm test:e2e:report   # 마지막 테스트 결과 HTML 리포트 열기
 ```
 
+## 데이터 모델
+
+| 모델    | 설명                   | PK / 주요 키                                                |
+| ------- | ---------------------- | ----------------------------------------------------------- |
+| User    | 사용자 (Auth.js)       | `id` (PK), `userId`·`nickname` (UK)                         |
+| Genre   | 게임 장르              | `id` (PK), `genreCode` (UK)                                 |
+| Game    | 게임                   | `id` (PK), `gameCode` (UK), `genreCode` (FK→Genre)          |
+| Like    | 좋아요                 | `[userId, gameId]` (복합 PK)                                |
+| Rank    | 리더보드               | `[gameId, userId]` (복합 PK), `[gameId, score DESC]` 인덱스 |
+| History | 이벤트 로그 (비정규화) | `id` (PK), FK 관계 없음                                     |
+
+스키마: `prisma/schema.prisma` · 시드: `prisma/seed.ts`
+
+## 게임 통합
+
+- **URL**: `${NEXT_PUBLIC_GAME_CDN_URL}/${gameCode}/index.html`
+- **postMessage**: Platform→Game(`INIT`, `PAUSE`, `RESUME`, `TERMINATE`), Game→Platform(`READY`, `SCORE`, `GAME_OVER`, `ERROR`)
+- **iframe**: `sandbox="allow-scripts allow-same-origin"`
+- **보안**: origin 검증, Zod 메시지 스키마, 환경변수 필수 (URL 하드코딩 금지)
+- **상세**: `docs/game-integration.md`
+
+## 어드민
+
+- 라우트: `src/app/(admin)/admin/{name}/`
+- 사이드바 레이아웃, 권한 검증 필수
+- 게임 등록: S3 presigned URL → CloudFront 서빙
+
 ## 프로젝트 구조
 
 ```
@@ -61,7 +96,7 @@ src/
 **App Router 구조** (`src/app/`):
 
 - `[locale]/` — i18n 동적 라우트, 모든 페이지의 루트
-- `(auth)` · `(main)` · `(mypage)` · `(fullscreen)` — Route Group (레이아웃 공유, URL 영향 없음)
+- `(auth)` · `(main)` · `(mypage)` · `(fullscreen)` · `(admin)` — Route Group (레이아웃 공유, URL 영향 없음)
 - `_components/` · `_hooks/` · `_api/` · `_constants/` · `_schemas/` — 페이지 전용 private 폴더 (`_` prefix로 라우팅 제외)
 - 여러 페이지에서 공유 시 상위 라우트 폴더의 `_components/` 등에 배치
 
@@ -302,10 +337,12 @@ Claude는 작업 중 발견한 프로젝트 지식을 `.claude/memory/`에 자�
 
 ```
 .claude/agents/
-├── code-reviewer.md   # 코드 리뷰 (Sonnet)
-├── test-runner.md     # 테스트 실행/분석 (Sonnet)
-├── doc-writer.md      # 문서 작성 (Sonnet)
-└── implementer.md     # 기능 구현 (inherit)
+├── code-reviewer.md    # 코드 리뷰 (Sonnet)
+├── test-runner.md      # 테스트 실행/분석 (Sonnet)
+├── doc-writer.md       # 문서 작성 (Sonnet)
+├── implementer.md      # 기능 구현 (inherit)
+├── ui-designer.md      # AI 주도 UI 설계/구현 (inherit)
+└── game-integrator.md  # iframe 게임 통합 (Sonnet)
 ```
 
 > 상세: `docs/claude-agents.md`
@@ -315,15 +352,41 @@ Claude는 작업 중 발견한 프로젝트 지식을 `.claude/memory/`에 자�
 ```
 .claude/commands/
 ├── git/    commit.md · push.md · pr.md
-├── code/   component.md · story.md · feature.md · page.md · api.md · socket.md · hook.md · test.md
-└── dev/    validate.md · review.md · refactor.md · brainstorm.md
+├── code/   component.md · story.md · feature.md · page.md · api.md · socket.md · hook.md · test.md · game.md · admin.md · design.md · schema.md
+└── dev/    validate.md · review.md · refactor.md · brainstorm.md · seed.md
 ```
+
+## 추천 워크플로우
+
+### 기능 개발 흐름
+
+```
+1. /brainstorm <기능명>          → 설계 확정 (디자이너 없으므로 필수)
+2. /code:schema (필요시)         → DB 모델 변경
+3. /code:design <설명>           → AI 주도 UI 설계
+4. /code:game 또는 /code:page    → 스캐폴딩
+5. /code:component + /code:story → 컴포넌트 + Storybook
+6. /code:api                     → API 라우트
+7. /code:test                    → 테스트
+8. /validate --fix               → 검증
+9. /commit → /push → /pr         → 배포
+```
+
+### 디자이너 없는 환경 전략
+
+1. `docs/design-system.md` 먼저 확정 (색상, 타이포, 간격)
+2. **Storybook 우선 개발**: 공유 컴포넌트를 격리 환경에서 먼저 검증
+3. **참고 사이트 활용**: itch.io, CrazyGames 등 유사 플랫폼 WebSearch로 참조
+4. `/code:design` 커맨드로 설명 기반 UI 생성
 
 ## 참고 문서
 
 - `docs/coding-conventions.md` — 전체 코딩 컨벤션 (코드 예시 포함)
 - `docs/testing.md` — 테스트 작성 가이드 (Vitest + RTL 패턴)
 - `docs/claude-agents.md` — 서브에이전트 및 브레인스토밍 가이드
+- `docs/game-integration.md` — 게임 통합 프로토콜 (postMessage, iframe, 점수 제출)
+- `docs/design-system.md` — 디자인 시스템 (컬러, 타이포, 컴포넌트 패턴)
+- `docs/ui-patterns.md` — 페이지별 레이아웃 패턴 카탈로그
 - `.claude/memory/` — Claude 자동 기록 지식 저장소
 - `.claude/commands/` — 프로젝트 커스텀 슬래시 명령어
 - `.claude/pr-rules.md` — PR 작성 규칙 (Why 중심, 템플릿 준수)
