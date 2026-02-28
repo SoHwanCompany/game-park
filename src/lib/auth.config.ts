@@ -1,5 +1,4 @@
 import { type NextAuthConfig } from 'next-auth';
-import Credentials from 'next-auth/providers/credentials';
 import Google from 'next-auth/providers/google';
 import Kakao from 'next-auth/providers/kakao';
 
@@ -12,13 +11,6 @@ export const authConfig = {
     Kakao({
       clientId: process.env.AUTH_KAKAO_ID,
       clientSecret: process.env.AUTH_KAKAO_SECRET,
-    }),
-    Credentials({
-      credentials: {
-        email: { label: '이메일', type: 'email' },
-        password: { label: '비밀번호', type: 'password' },
-      },
-      authorize: () => null,
     }),
   ],
   pages: {

@@ -1,6 +1,7 @@
 import { PrismaAdapter } from '@auth/prisma-adapter';
 import bcrypt from 'bcryptjs';
 import NextAuth from 'next-auth';
+import Credentials from 'next-auth/providers/credentials';
 
 import { prisma } from '@/lib/prisma';
 import { loginSchema } from '@/app/(auth)/_schemas/auth';
@@ -13,11 +14,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: 'jwt' },
   providers: [
     ...authConfig.providers,
-    // Credentials authorize를 Prisma 포함 버전으로 덮어쓰기
-    {
-      id: 'credentials',
-      name: 'Credentials',
-      type: 'credentials',
+    Credentials({
       credentials: {
         email: { label: '이메일', type: 'email' },
         password: { label: '비밀번호', type: 'password' },
@@ -49,7 +46,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         return { id: user.id, email: user.email, name: user.nickname, image: user.profileUrl };
       },
-    },
+    }),
   ],
   callbacks: {
     ...authConfig.callbacks,
