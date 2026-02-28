@@ -15,18 +15,18 @@
 
 ## URL 패턴
 
-```
-게임 URL: https://{CLOUDFRONT_DOMAIN}/{gameCode}/index.html
-환경변수: NEXT_PUBLIC_GAME_CDN_URL (CloudFront 도메인)
-```
+게임 URL은 Game 테이블의 `url` 필드에 저장된다. DB에서 직접 조회하여 사용한다.
 
-절대 S3 URL을 직접 하드코딩하지 않는다. 반드시 환경변수를 사용한다.
+```
+예시: https://{CLOUDFRONT_DOMAIN}/{gameCode}/index.html
+```
 
 ```typescript
-// Good
-const gameUrl = `${process.env.NEXT_PUBLIC_GAME_CDN_URL}/${gameCode}/index.html`;
+// Good — DB에서 조회한 URL 사용
+const game = await prisma.game.findUnique({ where: { gameCode } });
+const gameUrl = game.url;
 
-// Bad — 절대 하드코딩 금지
+// Bad — URL 하드코딩 금지
 const gameUrl = 'https://d1234.cloudfront.net/tetris/index.html';
 ```
 
@@ -66,7 +66,7 @@ const gameUrl = 'https://d1234.cloudfront.net/tetris/index.html';
 // Platform에서 Game으로 메시지 전송
 iframe.contentWindow?.postMessage(
   { type: 'INIT', payload: { userId, nickname, gameId } },
-  process.env.NEXT_PUBLIC_GAME_CDN_URL,
+  new URL(gameUrl).origin,
 );
 ```
 
@@ -83,7 +83,7 @@ iframe.contentWindow?.postMessage(
 // Platform에서 Game 메시지 수신
 window.addEventListener('message', (event) => {
   // origin 검증 필수
-  if (event.origin !== process.env.NEXT_PUBLIC_GAME_CDN_URL) {
+  if (event.origin !== new URL(gameUrl).origin) {
     return;
   }
 
@@ -160,5 +160,5 @@ Game: GAME_OVER { score, playtime }
 1. **origin 검증**: 모든 postMessage 수신 시 `event.origin` 검증 필수
 2. **메시지 스키마 검증**: Zod로 메시지 형식 검증
 3. **iframe sandbox**: 최소 권한 원칙 적용
-4. **환경변수**: CDN URL은 반드시 환경변수 사용
+4. **URL 관리**: 게임 URL은 DB(Game.url)에서 조회, 하드코딩 금지
 5. **점수 검증**: 서버 사이드에서 비정상 점수 필터링 (향후 구현)

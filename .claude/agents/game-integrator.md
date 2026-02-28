@@ -36,17 +36,17 @@ tools: Read, Write, Edit, Glob, Grep, Bash
 
 ### 보안 (최우선)
 
-- [ ] postMessage 수신 시 `event.origin` 검증 — `NEXT_PUBLIC_GAME_CDN_URL`과 비교
+- [ ] postMessage 수신 시 `event.origin` 검증 — `new URL(gameUrl).origin`과 비교
 - [ ] 메시지 스키마 Zod 검증
 - [ ] iframe `sandbox="allow-scripts allow-same-origin"` 설정
-- [ ] CDN URL 환경변수 사용 (하드코딩 금지)
+- [ ] 게임 URL은 DB(Game.url)에서 조회 (하드코딩 금지)
 
 ### iframe 설정
 
 ```tsx
 <iframe
   ref={iframeRef}
-  src={`${process.env.NEXT_PUBLIC_GAME_CDN_URL}/${gameCode}/index.html`}
+  src={gameUrl}
   sandbox="allow-scripts allow-same-origin"
   allow="autoplay; fullscreen"
   className="h-full w-full border-0"

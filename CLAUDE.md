@@ -61,7 +61,7 @@ pnpm test:e2e:report   # 마지막 테스트 결과 HTML 리포트 열기
 
 ## 게임 통합
 
-- **URL**: `${NEXT_PUBLIC_GAME_CDN_URL}/${gameCode}/index.html`
+- **URL**: Game 테이블의 `url` 필드에서 직접 조회
 - **postMessage**: Platform→Game(`INIT`, `PAUSE`, `RESUME`, `TERMINATE`), Game→Platform(`READY`, `SCORE`, `GAME_OVER`, `ERROR`)
 - **iframe**: `sandbox="allow-scripts allow-same-origin"`
 - **보안**: origin 검증, Zod 메시지 스키마, 환경변수 필수 (URL 하드코딩 금지)
