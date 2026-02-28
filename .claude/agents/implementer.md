@@ -19,6 +19,9 @@ model: inherit
 - 관련 기존 코드 확인
 - 공통 컴포넌트(`@/components/ui`, `@doubltworks/`) 재사용 가능 여부 확인
 - 기존 패턴과 일관성 유지
+- 게임 관련 작업 시 `docs/game-integration.md`, `docs/design-system.md` 읽기
+- UI 관련 작업 시 `docs/ui-patterns.md` 읽기
+- Prisma 모델 변경 시 마이그레이션 필요 여부 확인 후 보고
 
 ### 2. 구현
 

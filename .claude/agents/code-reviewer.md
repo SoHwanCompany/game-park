@@ -57,6 +57,25 @@ tools: Read, Glob, Grep, Bash
 - 순환 import 없음
 - import 후 빈 줄
 
+### 게임 통합
+
+- postMessage 수신 시 `event.origin` 검증 여부
+- iframe `sandbox` 속성 적절 설정 여부
+- 게임 CDN URL 환경변수 사용 (하드코딩 금지)
+- 메시지 스키마 Zod 검증 여부
+
+### 데이터베이스
+
+- Prisma 복합 키 (`@@id`) 올바르게 사용
+- 관계(relation) 정확성 — FK 필드와 references 일치
+- 인덱스 설정 적절성
+
+### 보안
+
+- S3/CloudFront URL 하드코딩 금지 — 환경변수 사용
+- 사용자 입력 검증 (Zod)
+- 권한 검증 (어드민 페이지 등)
+
 ## 출력 형식
 
 ```
