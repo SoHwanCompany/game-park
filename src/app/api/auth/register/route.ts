@@ -1,5 +1,3 @@
-import crypto from 'node:crypto';
-
 import bcrypt from 'bcryptjs';
 import { type NextRequest } from 'next/server';
 
@@ -16,7 +14,7 @@ export const POST = async (request: NextRequest): Promise<Response> => {
       return errorResponse('VALIDATION_ERROR', 400);
     }
 
-    const { email, password, name } = result.data;
+    const { email, password, nickname } = result.data;
 
     const existingUser = await prisma.user.findUnique({
       where: { email },
@@ -32,14 +30,11 @@ export const POST = async (request: NextRequest): Promise<Response> => {
       data: {
         email,
         password: hashedPassword,
-        name,
-        userId: crypto.randomUUID(),
-        nickname: name,
+        nickname,
       },
       select: {
         id: true,
         email: true,
-        name: true,
         nickname: true,
       },
     });
