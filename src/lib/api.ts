@@ -1,10 +1,6 @@
 import { NextResponse } from 'next/server';
 
-interface ApiResponse<T> {
-  code: string;
-  message: string;
-  data: T | null;
-}
+import { type ApiResponse } from '@/types/api';
 
 const ERROR_CODES = {
   VALIDATION_ERROR: '입력값이 올바르지 않습니다.',
@@ -35,4 +31,3 @@ const errorResponse = (
 };
 
 export { errorResponse, successResponse };
-export type { ApiResponse };

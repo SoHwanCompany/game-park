@@ -1,12 +1,9 @@
 'use client';
 
-import { useState } from 'react';
-
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 
-import { type ApiResponse } from '@/lib/api';
+import { useProfileUpdate } from '@/hooks/use-profile-update';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,45 +16,24 @@ interface ProfileFormProps {
 }
 
 export const ProfileForm = ({ initialNickname, email }: ProfileFormProps) => {
-  const router = useRouter();
-  const [serverError, setServerError] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
+  const { mutate, isPending, isSuccess, error } = useProfileUpdate();
 
   const {
     register,
     handleSubmit,
     reset,
-    formState: { errors, isSubmitting, isDirty },
+    formState: { errors, isDirty },
   } = useForm<ProfileUpdateFormValues>({
     resolver: zodResolver(profileUpdateSchema),
     defaultValues: { nickname: initialNickname },
   });
 
-  const onSubmit = async (data: ProfileUpdateFormValues): Promise<void> => {
-    setServerError('');
-    setSuccessMessage('');
-
-    try {
-      const response = await fetch('/api/user/profile', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-
-      const result: ApiResponse<unknown> = await response.json();
-
-      if (!response.ok) {
-        setServerError(result.message);
-
-        return;
-      }
-
-      setSuccessMessage('프로필이 수정되었습니다.');
-      reset({ nickname: data.nickname });
-      router.refresh();
-    } catch {
-      setServerError('서버 오류가 발생했습니다.');
-    }
+  const onSubmit = (data: ProfileUpdateFormValues): void => {
+    mutate(data, {
+      onSuccess: () => {
+        reset({ nickname: data.nickname });
+      },
+    });
   };
 
   return (
@@ -73,16 +49,14 @@ export const ProfileForm = ({ initialNickname, email }: ProfileFormProps) => {
         {errors.nickname && <p className="text-destructive text-sm">{errors.nickname.message}</p>}
       </div>
 
-      {serverError.length > 0 && (
-        <p className="text-destructive text-center text-sm">{serverError}</p>
+      {error && <p className="text-destructive text-center text-sm">{error.message}</p>}
+
+      {isSuccess && !isDirty && (
+        <p className="text-center text-sm text-green-600">프로필이 수정되었습니다.</p>
       )}
 
-      {successMessage.length > 0 && (
-        <p className="text-center text-sm text-green-600">{successMessage}</p>
-      )}
-
-      <Button type="submit" className="w-full" disabled={isSubmitting || !isDirty}>
-        {isSubmitting ? '수정 중...' : '프로필 수정'}
+      <Button type="submit" className="w-full" disabled={isPending || !isDirty}>
+        {isPending ? '수정 중...' : '프로필 수정'}
       </Button>
     </form>
   );

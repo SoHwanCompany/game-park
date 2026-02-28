@@ -1,12 +1,9 @@
 'use client';
 
-import { useState } from 'react';
-
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 
-import { type ApiResponse } from '@/lib/api';
+import { useRegister } from '@/hooks/use-register';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,39 +11,18 @@ import { Label } from '@/components/ui/label';
 import { registerSchema, type RegisterFormValues } from '../_schemas/auth';
 
 export const RegisterForm = () => {
-  const router = useRouter();
-  const [serverError, setServerError] = useState('');
+  const { mutate, isPending, error } = useRegister();
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
   });
 
-  const onSubmit = async (data: RegisterFormValues): Promise<void> => {
-    setServerError('');
-
-    try {
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-
-      const result: ApiResponse<unknown> = await response.json();
-
-      if (!response.ok) {
-        setServerError(result.message);
-
-        return;
-      }
-
-      router.push('/login?registered=true');
-    } catch {
-      setServerError('서버 오류가 발생했습니다.');
-    }
+  const onSubmit = (data: RegisterFormValues): void => {
+    mutate(data);
   };
 
   return (
@@ -82,12 +58,10 @@ export const RegisterForm = () => {
         )}
       </div>
 
-      {serverError.length > 0 && (
-        <p className="text-destructive text-center text-sm">{serverError}</p>
-      )}
+      {error && <p className="text-destructive text-center text-sm">{error.message}</p>}
 
-      <Button type="submit" className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? '가입 중...' : '회원가입'}
+      <Button type="submit" className="w-full" disabled={isPending}>
+        {isPending ? '가입 중...' : '회원가입'}
       </Button>
     </form>
   );
