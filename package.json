@@ -27,7 +27,7 @@
     "db:migrate:deploy": "prisma migrate deploy",
     "db:studio": "prisma studio",
     "db:seed": "prisma db seed",
-    "prepare": "husky"
+    "prepare": "husky || true"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
