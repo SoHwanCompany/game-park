@@ -37,6 +37,10 @@ export const authConfig = {
           return null;
         }
 
+        if (user.status === 'WITHDRAWN') {
+          return null;
+        }
+
         const isValid = await bcrypt.compare(parsed.data.password, user.password);
 
         if (!isValid) {
@@ -52,6 +56,36 @@ export const authConfig = {
     newUser: '/register',
   },
   callbacks: {
+    signIn: async ({ user }) => {
+      if (!user.id) {
+        return true;
+      }
+
+      const dbUser = await prisma.user.findUnique({
+        where: { id: user.id },
+        select: { status: true },
+      });
+
+      if (dbUser?.status === 'WITHDRAWN') {
+        return false;
+      }
+
+      return true;
+    },
+    jwt: ({ token, user }) => {
+      if (user) {
+        token.id = user.id;
+      }
+
+      return token;
+    },
+    session: ({ session, token }) => {
+      if (token.id) {
+        session.user.id = token.id as string;
+      }
+
+      return session;
+    },
     authorized: ({ auth, request: { nextUrl } }) => {
       const isLoggedIn = Boolean(auth?.user);
       const protectedPaths = ['/mypage'];
