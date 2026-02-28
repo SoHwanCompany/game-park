@@ -2,29 +2,25 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-const genres = [
-  { genreCode: 'puzzle', genreName: '퍼즐', description: '논리와 사고력을 요구하는 퍼즐 게임' },
-  { genreCode: 'action', genreName: '액션', description: '빠른 반응과 조작이 필요한 액션 게임' },
-  { genreCode: 'strategy', genreName: '전략', description: '전략적 사고가 필요한 전략 게임' },
-  { genreCode: 'arcade', genreName: '아케이드', description: '클래식 아케이드 스타일의 게임' },
-  {
-    genreCode: 'adventure',
-    genreName: '어드벤처',
-    description: '스토리와 탐험 중심의 어드벤처 게임',
-  },
-  { genreCode: 'sports', genreName: '스포츠', description: '스포츠를 주제로 한 게임' },
+const categories = [
+  { code: 'puzzle', name: '퍼즐' },
+  { code: 'action', name: '액션' },
+  { code: 'strategy', name: '전략' },
+  { code: 'arcade', name: '아케이드' },
+  { code: 'adventure', name: '어드벤처' },
+  { code: 'sports', name: '스포츠' },
 ];
 
 const main = async (): Promise<void> => {
-  for (const genre of genres) {
-    await prisma.genre.upsert({
-      where: { genreCode: genre.genreCode },
+  for (const category of categories) {
+    await prisma.category.upsert({
+      where: { code: category.code },
       update: {},
-      create: genre,
+      create: category,
     });
   }
 
-  console.warn(`Seeded ${genres.length} genres`);
+  console.warn(`Seeded ${categories.length} categories`);
 };
 
 main()

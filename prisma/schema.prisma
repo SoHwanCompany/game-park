@@ -7,35 +7,55 @@ datasource db {
   provider = "postgresql"
 }
 
+// ─── Enums ──────────────────────────────────────────────────
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  WITHDRAWN
+}
+
+enum GameStatus {
+  DRAFT
+  PUBLISHED
+  SUSPENDED
+  ARCHIVED
+}
+
 // ─── Auth.js Models ─────────────────────────────────────────
 
 model User {
-  id            String    @id @default(cuid())
-  userId        String    @unique
-  name          String?
-  email         String    @unique
-  emailVerified DateTime?
-  image         String?
-  password      String?
-  nickname      String    @unique
-  experience    Int       @default(0)
-  status        String    @default("ACTIVE")
-  accounts      Account[]
-  sessions      Session[]
-  likes         Like[]
-  ranks         Rank[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id              String     @id @default(cuid())
+  email           String     @unique @db.VarChar(255)
+  password        String?
+  nickname        String     @unique @db.VarChar(50)
+  profileUrl      String?
+  role            UserRole   @default(USER)
+  exp             Int        @default(0)
+  status          UserStatus @default(ACTIVE)
+  emailVerifiedAt DateTime?  @map("email_verified_at")
+  createdAt       DateTime   @default(now()) @map("created_at")
+  updatedAt       DateTime   @updatedAt @map("updated_at")
+
+  accounts  Account[]
+  sessions  Session[]
+  gameLikes GameLike[]
+  rankings  Ranking[]
 
   @@map("users")
 }
 
 model Account {
   id                String  @id @default(cuid())
-  userId            String
+  userId            String  @map("user_id")
   type              String
   provider          String
-  providerAccountId String
+  providerAccountId String  @map("provider_account_id")
   refresh_token     String?
   access_token      String?
   expires_at        Int?
@@ -43,7 +63,8 @@ model Account {
   scope             String?
   id_token          String?
   session_state     String?
-  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
   @@map("accounts")
@@ -51,10 +72,11 @@ model Account {
 
 model Session {
   id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
   expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("sessions")
 }
@@ -70,79 +92,73 @@ model VerificationToken {
 
 // ─── Game Platform Models ───────────────────────────────────
 
-model Genre {
+model Category {
   id          String   @id @default(cuid())
-  genreCode   String   @unique
-  genreName   String
+  code        String   @unique @db.VarChar(50)
+  name        String   @unique @db.VarChar(100)
   description String?
-  status      String   @default("ACTIVE")
-  games       Game[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  sortOrder   Int      @default(0) @map("sort_order")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
-  @@map("genres")
+  games Game[]
+
+  @@map("categories")
 }
 
 model Game {
-  id          String   @id @default(cuid())
-  gameCode    String   @unique
-  genreCode   String
-  gameName    String
-  description String?
-  url         String
-  thumbnail   String?
-  likeCount   Int      @default(0)
-  status      String   @default("ACTIVE")
-  genre       Genre    @relation(fields: [genreCode], references: [genreCode])
-  likes       Like[]
-  ranks       Rank[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String     @id @default(cuid())
+  code         String     @unique @db.VarChar(50)
+  title        String     @db.VarChar(200)
+  description  String
+  thumbnailUrl String     @map("thumbnail_url")
+  gameUrl      String     @map("game_url")
+  categoryId   String     @map("category_id")
+  likeCount    Int        @default(0) @map("like_count")
+  playCount    Int        @default(0) @map("play_count")
+  status       GameStatus @default(DRAFT)
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
 
-  @@index([genreCode])
+  category  Category   @relation(fields: [categoryId], references: [id])
+  gameLikes GameLike[]
+  rankings  Ranking[]
+
+  @@index([categoryId])
   @@index([status])
+  @@index([status, likeCount])
+  @@index([status, playCount])
+  @@index([status, createdAt])
   @@map("games")
 }
 
-model Like {
-  userId    String
-  gameId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-
-  @@id([userId, gameId])
-  @@map("likes")
-}
-
-model Rank {
-  gameId    String
-  userId    String
-  nickname  String
-  score     Int
-  status    String   @default("ACTIVE")
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@id([gameId, userId])
-  @@index([gameId, score(sort: Desc)])
-  @@map("ranks")
-}
-
-model History {
+model GameLike {
   id        String   @id @default(cuid())
-  userId    String
-  gameId    String
-  nickname  String
-  gameName  String
-  eventType String
-  payload   Json?
-  createdAt DateTime @default(now())
+  userId    String   @map("user_id")
+  gameId    String   @map("game_id")
+  createdAt DateTime @default(now()) @map("created_at")
 
-  @@index([userId])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  game Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, gameId])
   @@index([gameId])
-  @@index([createdAt])
-  @@map("histories")
+  @@map("game_likes")
+}
+
+model Ranking {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  gameId    String   @map("game_id")
+  score     Int
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  game Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, gameId])
+  @@index([gameId, score(sort: Desc), updatedAt(sort: Asc)])
+  @@map("rankings")
 }

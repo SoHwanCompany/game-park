@@ -58,9 +58,9 @@ export const RegisterForm = () => {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="name">닉네임</Label>
-        <Input id="name" type="text" placeholder="닉네임" {...register('name')} />
-        {errors.name && <p className="text-destructive text-sm">{errors.name.message}</p>}
+        <Label htmlFor="nickname">닉네임</Label>
+        <Input id="nickname" type="text" placeholder="닉네임" {...register('nickname')} />
+        {errors.nickname && <p className="text-destructive text-sm">{errors.nickname.message}</p>}
       </div>
 
       <div className="space-y-2">
