@@ -40,6 +40,8 @@
     "@prisma/client": "^7.4.2",
     "@prisma/client-runtime-utils": "^7.4.2",
     "@radix-ui/react-slot": "^1.2.4",
+    "@tanstack/react-query": "^5.90.21",
+    "axios": "^1.13.6",
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
