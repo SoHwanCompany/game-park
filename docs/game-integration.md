@@ -72,12 +72,12 @@ iframe.contentWindow?.postMessage(
 
 ### Game → Platform
 
-| 메시지      | 설명           | payload               |
-| ----------- | -------------- | --------------------- |
-| `READY`     | 게임 로드 완료 | `{}`                  |
-| `SCORE`     | 중간 점수 보고 | `{ score }`           |
-| `GAME_OVER` | 게임 종료      | `{ score, playtime }` |
-| `ERROR`     | 에러 발생      | `{ code, message }`   |
+| 메시지      | 설명           | payload                               |
+| ----------- | -------------- | ------------------------------------- |
+| `READY`     | 게임 로드 완료 | `{}`                                  |
+| `SCORE`     | 중간 점수 보고 | `{ score }`                           |
+| `GAME_OVER` | 게임 종료      | `{ userId, gameId, score, playtime }` |
+| `ERROR`     | 에러 발생      | `{ code, message }`                   |
 
 ```typescript
 // Platform에서 Game 메시지 수신
@@ -116,7 +116,12 @@ const gameMessageSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('SCORE'), payload: z.object({ score: z.number() }) }),
   z.object({
     type: z.literal('GAME_OVER'),
-    payload: z.object({ score: z.number(), playtime: z.number() }),
+    payload: z.object({
+      userId: z.string(),
+      gameId: z.string(),
+      score: z.number(),
+      playtime: z.number(),
+    }),
   }),
   z.object({
     type: z.literal('ERROR'),
@@ -132,7 +137,7 @@ const gameMessageSchema = z.discriminatedUnion('type', [
 2. Game: READY → Platform: INIT (userId, nickname, gameId)
 3. 게임 플레이 중 → Game: SCORE (선택적)
 4. 탭 비활성화 → Platform: PAUSE / 탭 활성화 → Platform: RESUME
-5. 게임 종료 → Game: GAME_OVER (score, playtime)
+5. 게임 종료 → Game: GAME_OVER (userId, gameId, score, playtime)
 6. Platform: 랭킹 API 호출 → History 기록 → 결과 화면 표시
 7. 페이지 이탈 → Platform: TERMINATE
 ```
@@ -140,8 +145,8 @@ const gameMessageSchema = z.discriminatedUnion('type', [
 ## 점수 제출 플로우
 
 ```
-Game: GAME_OVER { score, playtime }
-  → Platform: POST /api/ranks { gameId, score }
+Game: GAME_OVER { userId, gameId, score, playtime }
+  → Platform: POST /api/ranks { gameId, userId, score }
   → Platform: POST /api/histories { eventType: 'GAME_OVER', ... }
   → 결과 화면 (점수, 랭킹, 다시하기)
 ```
