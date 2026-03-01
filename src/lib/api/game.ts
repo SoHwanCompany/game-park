@@ -17,10 +17,11 @@ export const postLike = async (gameId: string): Promise<ApiResponse<LikeResponse
 export const postRanking = async (
   gameId: string,
   score: number,
+  playtime: number,
 ): Promise<ApiResponse<{ score: number; isNewRecord: boolean }>> => {
   const response = await api.post<ApiResponse<{ score: number; isNewRecord: boolean }>>(
     `/api/games/${gameId}/ranking`,
-    { score },
+    { score, playtime },
   );
 
   return response.data;
