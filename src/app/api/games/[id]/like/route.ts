@@ -19,7 +19,7 @@ export const POST = async (_request: NextRequest, context: RouteContext): Promis
     const { id: gameId } = await context.params;
     const userId = session.user.id;
 
-    const game = await prisma.game.findUnique({
+    const game = await prisma.game.findFirst({
       where: { id: gameId, status: 'PUBLISHED' },
       select: { id: true },
     });

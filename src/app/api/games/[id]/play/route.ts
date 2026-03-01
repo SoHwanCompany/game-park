@@ -12,13 +12,22 @@ export const POST = async (_request: NextRequest, context: RouteContext): Promis
   try {
     const { id: gameId } = await context.params;
 
-    const game = await prisma.game.update({
+    const game = await prisma.game.findFirst({
       where: { id: gameId, status: 'PUBLISHED' },
+      select: { id: true },
+    });
+
+    if (!game) {
+      return errorResponse('GAME_NOT_FOUND', 404);
+    }
+
+    const updated = await prisma.game.update({
+      where: { id: gameId },
       data: { playCount: { increment: 1 } },
       select: { playCount: true },
     });
 
-    return successResponse({ playCount: game.playCount }, '플레이 카운트가 증가했습니다.');
+    return successResponse({ playCount: updated.playCount }, '플레이 카운트가 증가했습니다.');
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
       return errorResponse('GAME_NOT_FOUND', 404);

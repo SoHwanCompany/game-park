@@ -24,7 +24,7 @@ export const POST = async (request: NextRequest, context: RouteContext): Promise
       return errorResponse('VALIDATION_ERROR', 400);
     }
 
-    const game = await prisma.game.findUnique({
+    const game = await prisma.game.findFirst({
       where: { id: gameId, status: 'PUBLISHED' },
       select: { id: true },
     });

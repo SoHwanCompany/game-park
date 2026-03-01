@@ -21,10 +21,13 @@ export interface LikeResponse {
   likeCount: number;
 }
 
-export interface GameEndMessage {
-  type: 'GAME_END';
-  payload: {
-    userId: string;
-    score: number;
-  };
+export interface PlatformInitMessage {
+  type: 'INIT';
+  payload: { userId: string | null; nickname: string | null; gameId: string };
 }
+
+export interface PlatformControlMessage {
+  type: 'PAUSE' | 'RESUME' | 'TERMINATE';
+}
+
+export type PlatformToGameMessage = PlatformInitMessage | PlatformControlMessage;
