@@ -132,9 +132,9 @@ export const GamePlayer = ({
 
         case 'GAME_OVER': {
           if (userId) {
-            const { score } = message.payload;
+            const { score, playtime } = message.payload;
 
-            void postRanking(gameId, score);
+            void postRanking(gameId, score, playtime);
           }
 
           break;
