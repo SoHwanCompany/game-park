@@ -7,6 +7,7 @@ import { GamePlayer } from '@/components/game/game-player';
 import { Button } from '@/components/ui/button';
 
 import { LikeButton } from '../_components/like-button';
+import { UserRankingSection } from './_components/user-ranking-section';
 
 interface GameDetailPageProps {
   params: Promise<{ id: string }>;
@@ -79,6 +80,8 @@ export default async function GameDetailPage({ params }: GameDetailPageProps) {
           </Button>
         </div>
       </div>
+
+      <UserRankingSection gameId={game.id} />
     </div>
   );
 }
