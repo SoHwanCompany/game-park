@@ -9,14 +9,9 @@ import { Button } from '@/components/ui/button';
 interface CategoryFilterProps {
   categories: CategoryItem[];
   currentCategory?: string;
-  basePath?: string;
 }
 
-export const CategoryFilter = ({
-  categories,
-  currentCategory,
-  basePath = '/games',
-}: CategoryFilterProps) => {
+export const CategoryFilter = ({ categories, currentCategory }: CategoryFilterProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -29,7 +24,7 @@ export const CategoryFilter = ({
       params.set('category', code);
     }
 
-    router.push(`${basePath}?${params.toString()}`);
+    router.push(`/games?${params.toString()}`);
   };
 
   const allCategories = [ALL_CATEGORY, ...categories];

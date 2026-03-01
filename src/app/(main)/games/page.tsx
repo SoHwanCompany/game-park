@@ -5,7 +5,7 @@ import { type Prisma } from '@prisma/client';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
-import { CategoryFilter } from '../_components/category-filter';
+import { CategoryFilter } from './_components/category-filter';
 import { GameList } from './_components/game-list';
 import { SortSelect } from './_components/sort-select';
 
