@@ -16,7 +16,7 @@ export default async function GameDetailPage({ params }: GameDetailPageProps) {
   const { id } = await params;
   const session = await auth();
 
-  const game = await prisma.game.findUnique({
+  const game = await prisma.game.findFirst({
     where: { id, status: 'PUBLISHED' },
     include: {
       category: { select: { code: true, name: true } },

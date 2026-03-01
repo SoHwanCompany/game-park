@@ -21,10 +21,40 @@ export interface LikeResponse {
   likeCount: number;
 }
 
-export interface GameEndMessage {
-  type: 'GAME_END';
-  payload: {
-    userId: string;
-    score: number;
-  };
+export interface PlatformInitMessage {
+  type: 'INIT';
+  payload: { userId: string | null; nickname: string | null; gameId: string };
 }
+
+export interface PlatformControlMessage {
+  type: 'PAUSE' | 'RESUME' | 'TERMINATE';
+  payload: Record<string, never>;
+}
+
+export type PlatformToGameMessage = PlatformInitMessage | PlatformControlMessage;
+
+export interface GameReadyMessage {
+  type: 'READY';
+  payload: Record<string, never>;
+}
+
+export interface GameScoreMessage {
+  type: 'SCORE';
+  payload: { score: number };
+}
+
+export interface GameOverMessage {
+  type: 'GAME_OVER';
+  payload: { userId: string; gameId: string; score: number; playtime: number };
+}
+
+export interface GameErrorMessage {
+  type: 'ERROR';
+  payload: { code: string; message: string };
+}
+
+export type GameToPlatformMessage =
+  | GameReadyMessage
+  | GameScoreMessage
+  | GameOverMessage
+  | GameErrorMessage;

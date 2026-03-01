@@ -12,7 +12,7 @@ export default async function PlayPage({ params }: PlayPageProps) {
   const { id } = await params;
   const session = await auth();
 
-  const game = await prisma.game.findUnique({
+  const game = await prisma.game.findFirst({
     where: { id, status: 'PUBLISHED' },
     select: { id: true, title: true, gameUrl: true },
   });
