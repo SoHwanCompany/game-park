@@ -9,6 +9,7 @@ const ERROR_CODES = {
   INVALID_CREDENTIALS: '이메일 또는 비밀번호가 올바르지 않습니다.',
   UNAUTHORIZED: '로그인이 필요합니다.',
   USER_NOT_FOUND: '사용자를 찾을 수 없습니다.',
+  GAME_NOT_FOUND: '게임을 찾을 수 없습니다.',
   INTERNAL_ERROR: '서버 오류가 발생했습니다.',
 } as const;
 

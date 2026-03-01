@@ -390,3 +390,4 @@ Claude는 작업 중 발견한 프로젝트 지식을 `.claude/memory/`에 자�
 - `.claude/memory/` — Claude 자동 기록 지식 저장소
 - `.claude/commands/` — 프로젝트 커스텀 슬래시 명령어
 - `.claude/pr-rules.md` — PR 작성 규칙 (Why 중심, 템플릿 준수)
+- `.github/pull_request_template.md` — PR 본문 템플릿 (PR 생성 시 반드시 Read 도구로 읽고 양식 준수)
