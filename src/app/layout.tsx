@@ -7,7 +7,6 @@ import './globals.css';
 export const metadata: Metadata = {
   title: 'Game Park',
   description: '다양한 웹 게임을 즐길 수 있는 플랫폼',
-  icons: { icon: '/favicon.svg' },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -85,15 +85,4 @@
   body {
     @apply bg-background text-foreground;
   }
-
-  button,
-  a,
-  [role='button'],
-  [type='checkbox'],
-  [type='radio'],
-  select,
-  summary,
-  label {
-    cursor: pointer;
-  }
 }
