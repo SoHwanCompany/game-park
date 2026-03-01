@@ -2,12 +2,12 @@
 
 ## 템플릿
 
-PR 본문은 `.github/pull_request_template.md` 형식을 따른다.
+PR 본문은 `.github/pull_request_template.md` 파일을 **반드시 Read 도구로 읽은 뒤** 그 양식을 그대로 따른다. 템플릿을 암기하거나 인라인으로 복사하지 않는다.
 
 ## 작성 원칙
 
 1. **Why 중심**: "무엇을 했는지"보다 "왜 필요한지"를 먼저 설명
-2. **구체적으로**: placeholder 문구 남기지 않고 실제 내용으로 채움
+2. **구체적으로**: placeholder·주석 문구 남기지 않고 실제 내용으로 채움
 3. **테스트 가능하게**: 리뷰어가 그대로 따라하면 검증할 수 있는 수준으로 작성
 4. **해당 없음 명시**: 변경이 없는 섹션은 `해당 없음` 또는 삭제
 
@@ -25,3 +25,7 @@ PR 본문은 `.github/pull_request_template.md` 형식을 따른다.
 
 - 명령어, 파일명, 환경변수는 백틱으로 감싸기: `pnpm dev`, `NEXT_PUBLIC_API_URL`
 - 변경 파일이 많으면 카테고리별로 그룹핑
+
+## Co-Author
+
+- 커밋 메시지·PR 본문에 `Co-Authored-By` 줄 추가 금지
