@@ -14,9 +14,21 @@ import { Label } from '@/components/ui/label';
 
 import { loginSchema, type LoginFormValues } from '../_schemas/auth';
 
+const downgradeToSessionCookie = (): void => {
+  const cookieName = 'authjs.session-token';
+  const cookie = document.cookie.split('; ').find((c) => c.startsWith(`${cookieName}=`));
+
+  if (cookie) {
+    const value = cookie.split('=').slice(1).join('=');
+
+    document.cookie = `${cookieName}=${value}; path=/; SameSite=Lax`;
+  }
+};
+
 export const LoginForm = () => {
   const searchParams = useSearchParams();
   const [serverError, setServerError] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const registered = searchParams.get('registered') === 'true';
 
   const {
@@ -41,6 +53,10 @@ export const LoginForm = () => {
         setServerError('이메일 또는 비밀번호가 올바르지 않습니다.');
 
         return;
+      }
+
+      if (!rememberMe) {
+        downgradeToSessionCookie();
       }
 
       window.location.href = '/';
@@ -73,6 +89,15 @@ export const LoginForm = () => {
           <Input id="password" type="password" placeholder="비밀번호" {...register('password')} />
           {errors.password && <p className="text-destructive text-sm">{errors.password.message}</p>}
         </div>
+
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={rememberMe}
+            onChange={(e) => setRememberMe(e.target.checked)}
+          />
+          <span className="text-muted-foreground text-sm">자동 로그인</span>
+        </label>
 
         {serverError.length > 0 && (
           <p className="text-destructive text-center text-sm">{serverError}</p>
@@ -110,7 +135,7 @@ export const LoginForm = () => {
         </div>
       </div>
 
-      <Button variant="ghost" className="text-muted-foreground w-full" asChild>
+      <Button variant="link" className="text-muted-foreground w-full" asChild>
         <Link href="/">로그인 없이 둘러보기</Link>
       </Button>
     </div>
