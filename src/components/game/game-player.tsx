@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import Link from 'next/link';
 
@@ -40,11 +40,11 @@ export const GamePlayer = ({
   const [gameState, setGameState] = useState<GameState>('loading');
   const [errorInfo, setErrorInfo] = useState<GameErrorPayload | null>(null);
   const readyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const gameOrigin = useMemo(() => new URL(gameUrl).origin, [gameUrl]);
+  const gameOrigin = new URL(gameUrl).origin;
   const gameOriginRef = useRef(gameOrigin);
 
   gameOriginRef.current = gameOrigin;
-  const guestNickname = useMemo(() => (userId ? null : generateRandomNickname()), [userId]);
+  const [guestNickname, setGuestNickname] = useState<string | null>(null);
   const displayNickname = nickname ?? guestNickname;
 
   const sendToGame = useCallback(
@@ -73,6 +73,12 @@ export const GamePlayer = ({
   const sendInit = useCallback((): void => {
     sendToGame({ type: 'INIT', payload: { userId, nickname: displayNickname, gameId } });
   }, [sendToGame, userId, displayNickname, gameId]);
+
+  useEffect(() => {
+    if (!userId) {
+      setGuestNickname(generateRandomNickname());
+    }
+  }, [userId]);
 
   useEffect(() => {
     const playedKey = `played_${gameId}`;
