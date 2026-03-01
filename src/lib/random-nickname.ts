@@ -65,8 +65,8 @@ const NOUNS = [
 ];
 
 export const generateRandomNickname = (): string => {
-  const adjective = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)];
-  const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)];
+  const adjective = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)] ?? '신나는';
+  const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)] ?? '판다';
 
   return `${adjective}${noun}`;
 };

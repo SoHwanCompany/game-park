@@ -91,7 +91,7 @@ const games = [
     description:
       '실시간으로 진행되는 긴장감 넘치는 지뢰찾기 게임! 숨겨진 지뢰를 피해 안전한 칸을 열어가세요. 클래식 지뢰찾기에 실시간 요소를 더해 한층 스릴 있는 경험을 제공합니다.',
     categoryCode: 'puzzle',
-    gameUrl: 'https://d2ba9ahp55uzic.cloudfront.net/kaboom/index.html',
+    gameUrl: 'https://example.com/games/kaboom',
   },
 ];
 

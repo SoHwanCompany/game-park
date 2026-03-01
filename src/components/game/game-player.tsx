@@ -6,14 +6,18 @@ import Link from 'next/link';
 
 import { postPlay, postRanking } from '@/lib/api/game';
 import { generateRandomNickname } from '@/lib/random-nickname';
-import { type GameToPlatformMessage, type PlatformToGameMessage } from '@/types/game';
+import { type PlatformToGameMessage } from '@/types/game';
 import { Button } from '@/components/ui/button';
 
-import { gameMessageSchema } from './game-message-schema';
+import {
+  gameMessageSchema,
+  type GameErrorPayload,
+  type GameToPlatformMessage,
+} from './game-message-schema';
 
 const READY_TIMEOUT_MS = 10_000;
 
-type GameState = 'loading' | 'ready' | 'playing' | 'error' | 'timeout';
+type GameState = 'loading' | 'playing' | 'error' | 'timeout';
 
 interface GamePlayerProps {
   gameUrl: string;
@@ -34,24 +38,36 @@ export const GamePlayer = ({
 }: GamePlayerProps) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [gameState, setGameState] = useState<GameState>('loading');
-  const [errorInfo, setErrorInfo] = useState<{ code: string; message: string } | null>(null);
+  const [errorInfo, setErrorInfo] = useState<GameErrorPayload | null>(null);
   const readyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const gameOriginRef = useRef<string>('');
+  const gameOrigin = useMemo(() => new URL(gameUrl).origin, [gameUrl]);
+  const gameOriginRef = useRef(gameOrigin);
+
+  gameOriginRef.current = gameOrigin;
   const guestNickname = useMemo(() => (userId ? null : generateRandomNickname()), [userId]);
   const displayNickname = nickname ?? guestNickname;
 
-  useEffect(() => {
-    gameOriginRef.current = new URL(gameUrl).origin;
-  }, [gameUrl]);
+  const sendToGame = useCallback(
+    (message: PlatformToGameMessage): void => {
+      const iframe = iframeRef.current;
 
-  const sendToGame = useCallback((message: PlatformToGameMessage): void => {
-    const iframe = iframeRef.current;
+      if (!iframe?.contentWindow) {
+        return;
+      }
 
-    if (!iframe?.contentWindow) {
-      return;
+      iframe.contentWindow.postMessage(message, gameOrigin);
+    },
+    [gameOrigin],
+  );
+
+  const startReadyTimeout = useCallback((): void => {
+    if (readyTimeoutRef.current) {
+      clearTimeout(readyTimeoutRef.current);
     }
 
-    iframe.contentWindow.postMessage(message, gameOriginRef.current);
+    readyTimeoutRef.current = setTimeout(() => {
+      setGameState('timeout');
+    }, READY_TIMEOUT_MS);
   }, []);
 
   const sendInit = useCallback((): void => {
@@ -70,22 +86,18 @@ export const GamePlayer = ({
   }, [gameId]);
 
   useEffect(() => {
-    readyTimeoutRef.current = setTimeout(() => {
-      if (gameState === 'loading') {
-        setGameState('timeout');
-      }
-    }, READY_TIMEOUT_MS);
+    startReadyTimeout();
 
     return () => {
       if (readyTimeoutRef.current) {
         clearTimeout(readyTimeoutRef.current);
       }
     };
-  }, [gameState]);
+  }, [startReadyTimeout]);
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent): void => {
-      if (event.origin !== gameOriginRef.current) {
+      if (event.origin !== gameOrigin) {
         return;
       }
 
@@ -135,7 +147,7 @@ export const GamePlayer = ({
     return () => {
       window.removeEventListener('message', handleMessage);
     };
-  }, [gameId, sendInit]);
+  }, [gameId, gameOrigin, sendInit, userId]);
 
   useEffect(() => {
     const handleVisibilityChange = (): void => {
@@ -144,9 +156,9 @@ export const GamePlayer = ({
       }
 
       if (document.hidden) {
-        sendToGame({ type: 'PAUSE', payload: {} as Record<string, never> });
+        sendToGame({ type: 'PAUSE' });
       } else {
-        sendToGame({ type: 'RESUME', payload: {} as Record<string, never> });
+        sendToGame({ type: 'RESUME' });
       }
     };
 
@@ -159,20 +171,28 @@ export const GamePlayer = ({
 
   useEffect(() => {
     return () => {
-      sendToGame({ type: 'TERMINATE', payload: {} as Record<string, never> });
+      const iframe = iframeRef.current;
+      const origin = gameOriginRef.current;
+
+      if (!iframe?.contentWindow || !origin) {
+        return;
+      }
+
+      iframe.contentWindow.postMessage({ type: 'TERMINATE' }, origin);
     };
-  }, [sendToGame]);
+  }, []);
 
   const handleRetry = useCallback((): void => {
     setGameState('loading');
     setErrorInfo(null);
+    startReadyTimeout();
 
     const iframe = iframeRef.current;
 
     if (iframe) {
       iframe.src = gameUrl;
     }
-  }, [gameUrl]);
+  }, [gameUrl, startReadyTimeout]);
 
   const renderOverlay = (): React.ReactNode => {
     if (gameState === 'loading') {
