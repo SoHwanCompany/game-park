@@ -3,7 +3,6 @@ import { type NextRequest } from 'next/server';
 import { errorResponse, successResponse } from '@/lib/api';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { calculateExp } from '@/constants/exp';
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -19,14 +18,11 @@ export const POST = async (request: NextRequest, context: RouteContext): Promise
 
     const { id: gameId } = await context.params;
     const userId = session.user.id;
-    const body = (await request.json()) as { score: unknown; playtime: unknown };
+    const body = (await request.json()) as { score: unknown };
 
     if (typeof body.score !== 'number' || !Number.isFinite(body.score)) {
       return errorResponse('VALIDATION_ERROR', 400);
     }
-
-    const playtime =
-      typeof body.playtime === 'number' && Number.isFinite(body.playtime) ? body.playtime : 0;
 
     const game = await prisma.game.findFirst({
       where: { id: gameId, status: 'PUBLISHED' },
@@ -41,14 +37,7 @@ export const POST = async (request: NextRequest, context: RouteContext): Promise
       where: { userId_gameId: { userId, gameId } },
     });
 
-    const expGain = calculateExp(body.score, playtime);
-
     if (existing && existing.score >= body.score) {
-      await prisma.user.update({
-        where: { id: userId },
-        data: { exp: { increment: expGain } },
-      });
-
       return successResponse(
         { score: existing.score, isNewRecord: false },
         '기존 최고 점수가 더 높습니다.',
@@ -59,11 +48,6 @@ export const POST = async (request: NextRequest, context: RouteContext): Promise
       where: { userId_gameId: { userId, gameId } },
       update: { score: body.score },
       create: { userId, gameId, score: body.score },
-    });
-
-    await prisma.user.update({
-      where: { id: userId },
-      data: { exp: { increment: expGain } },
     });
 
     return successResponse(

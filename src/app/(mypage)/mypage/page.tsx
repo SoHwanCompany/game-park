@@ -2,7 +2,6 @@ import { redirect } from 'next/navigation';
 
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { calculateLevel } from '@/constants/exp';
 
 import { ProfileForm } from './_components/profile-form';
 import { WithdrawButton } from './_components/withdraw-button';
@@ -43,9 +42,6 @@ export default async function MypagePage() {
               <span className="text-foreground">
                 {user.role === 'ADMIN' ? '관리자' : '일반 회원'}
               </span>
-            </p>
-            <p>
-              레벨: <span className="text-foreground">Lv.{calculateLevel(user.exp)}</span>
             </p>
             <p>
               경험치: <span className="text-foreground">{user.exp} EXP</span>
