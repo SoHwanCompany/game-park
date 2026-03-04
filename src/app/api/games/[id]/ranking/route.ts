@@ -1,3 +1,4 @@
+import { revalidateTag } from 'next/cache';
 import { type NextRequest } from 'next/server';
 
 import { errorResponse, successResponse } from '@/lib/api';
@@ -65,6 +66,8 @@ export const POST = async (request: NextRequest, context: RouteContext): Promise
       where: { id: userId },
       data: { exp: { increment: expGain } },
     });
+
+    revalidateTag('rankings', 'default');
 
     return successResponse(
       { score: ranking.score, isNewRecord: true },
