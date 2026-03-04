@@ -37,6 +37,7 @@ export const GamePlayer = ({
   variant = 'embedded',
 }: GamePlayerProps) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const hasCountedRef = useRef(false);
   const [gameState, setGameState] = useState<GameState>('loading');
   const [errorInfo, setErrorInfo] = useState<GameErrorPayload | null>(null);
   const readyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -81,17 +82,6 @@ export const GamePlayer = ({
   }, [userId]);
 
   useEffect(() => {
-    const playedKey = `played_${gameId}`;
-
-    if (sessionStorage.getItem(playedKey)) {
-      return;
-    }
-
-    sessionStorage.setItem(playedKey, '1');
-    void postPlay(gameId);
-  }, [gameId]);
-
-  useEffect(() => {
     startReadyTimeout();
 
     return () => {
@@ -127,10 +117,30 @@ export const GamePlayer = ({
         }
 
         case 'SCORE': {
+          if (!hasCountedRef.current) {
+            const playedKey = `played_${gameId}`;
+
+            if (!sessionStorage.getItem(playedKey)) {
+              hasCountedRef.current = true;
+              sessionStorage.setItem(playedKey, '1');
+              void postPlay(gameId);
+            }
+          }
+
           break;
         }
 
         case 'GAME_OVER': {
+          if (!hasCountedRef.current) {
+            const playedKey = `played_${gameId}`;
+
+            if (!sessionStorage.getItem(playedKey)) {
+              hasCountedRef.current = true;
+              sessionStorage.setItem(playedKey, '1');
+              void postPlay(gameId);
+            }
+          }
+
           if (userId) {
             const { score, playtime } = message.payload;
 
