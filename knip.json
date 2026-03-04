@@ -16,7 +16,6 @@
     "**/*.test.{ts,tsx}",
     "**/*.stories.{ts,tsx}",
     "src/components/ui/**",
-    "src/components/common/*-skeleton.tsx",
     "src/constants/index.ts",
     "src/types/index.ts",
     "src/lib/utils.ts",
