@@ -6,6 +6,7 @@ import Link from 'next/link';
 
 import { postPlay, postRanking } from '@/lib/api/game';
 import { generateRandomNickname } from '@/lib/random-nickname';
+import { cn } from '@/lib/utils';
 import { type PlatformToGameMessage } from '@/types/game';
 import { Button } from '@/components/ui/button';
 
@@ -25,19 +26,13 @@ interface GamePlayerProps {
   gameId: string;
   userId: string | null;
   nickname: string | null;
-  variant?: 'embedded' | 'fullscreen';
 }
 
-export const GamePlayer = ({
-  gameUrl,
-  gameTitle,
-  gameId,
-  userId,
-  nickname,
-  variant = 'embedded',
-}: GamePlayerProps) => {
+export const GamePlayer = ({ gameUrl, gameTitle, gameId, userId, nickname }: GamePlayerProps) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const hasCountedRef = useRef(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [gameState, setGameState] = useState<GameState>('loading');
   const [errorInfo, setErrorInfo] = useState<GameErrorPayload | null>(null);
   const readyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -75,11 +70,39 @@ export const GamePlayer = ({
     sendToGame({ type: 'INIT', payload: { userId, nickname: displayNickname, gameId } });
   }, [sendToGame, userId, displayNickname, gameId]);
 
+  const toggleFullscreen = useCallback(async (): Promise<void> => {
+    const container = containerRef.current;
+
+    if (!container) {
+      return;
+    }
+
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+    } else {
+      await container.requestFullscreen();
+    }
+  }, []);
+
   useEffect(() => {
     if (!userId) {
       setGuestNickname(generateRandomNickname());
     }
   }, [userId]);
+
+  useEffect(() => {
+    const handleFullscreenChange = (): void => {
+      const isFull = Boolean(document.fullscreenElement);
+
+      setIsFullscreen(isFull);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, []);
 
   useEffect(() => {
     startReadyTimeout();
@@ -256,35 +279,42 @@ export const GamePlayer = ({
       ref={iframeRef}
       src={gameUrl}
       title={gameTitle}
-      className={
-        variant === 'fullscreen' ? 'flex-1 border-0' : 'absolute inset-0 h-full w-full border-0'
-      }
+      className={isFullscreen ? 'flex-1 border-0' : 'absolute inset-0 h-full w-full border-0'}
       allow="autoplay; fullscreen"
       sandbox="allow-scripts allow-same-origin"
     />
   );
 
-  if (variant === 'fullscreen') {
-    return (
-      <div className="flex h-full flex-col">
+  return (
+    <div
+      ref={containerRef}
+      className={cn(
+        'relative w-full overflow-hidden rounded-lg border',
+        isFullscreen ? 'flex h-full flex-col rounded-none border-0' : 'aspect-video',
+      )}
+    >
+      {isFullscreen && (
         <div className="bg-background flex h-10 items-center justify-between border-b px-4">
           <span className="truncate text-sm font-medium">{gameTitle}</span>
-          <Button variant="ghost" size="xs" asChild>
-            <Link href={`/games/${gameId}`}>나가기</Link>
+          <Button variant="ghost" size="xs" onClick={() => void toggleFullscreen()}>
+            나가기
           </Button>
         </div>
-        <div className="relative flex-1">
-          {iframeElement}
-          {renderOverlay()}
-        </div>
+      )}
+      <div className={cn('relative', isFullscreen ? 'flex-1' : 'h-full')}>
+        {iframeElement}
+        {renderOverlay()}
       </div>
-    );
-  }
-
-  return (
-    <div className="relative aspect-video w-full overflow-hidden rounded-lg border">
-      {iframeElement}
-      {renderOverlay()}
+      {!isFullscreen && gameState === 'playing' && (
+        <Button
+          variant="secondary"
+          size="xs"
+          className="absolute top-2 right-2 z-10 opacity-0 transition-opacity hover:opacity-100 focus:opacity-100 [div:hover>&]:opacity-70"
+          onClick={() => void toggleFullscreen()}
+        >
+          전체화면
+        </Button>
+      )}
     </div>
   );
 };
