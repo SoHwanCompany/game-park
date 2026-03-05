@@ -1,36 +1,36 @@
-# 게임 플랫폼 통합 점수 체계 설계
+# 게임 플랫폼 경험치 정규화 설계
 
 ## 개요
 
-모든 게임의 점수를 0~10,000 범위로 정규화하여 크로스게임 통합 랭킹을 제공하는 점수 체계.
-게임은 기존 postMessage 프로토콜을 변경하지 않고, 플랫폼이 정규화를 전담한다.
+게임 점수는 raw score 그대로 저장하고(랭킹은 게임별 독립), 플랫폼 경험치 계산 시에만 0~10,000으로 정규화하여 게임 간 공정한 EXP 보상을 제공하는 체계.
 
 ## 배경
 
 - 게임마다 점수 범위가 다름 (Kaboom 0~3,150 vs Handle 무한 누적)
-- 난이도 배수 체계가 불일치 (Kaboom 1/2/3 vs Handle 1/3/8)
-- 게임 유형이 다름 (Kaboom: 1판 클리어 vs Handle: 무한 라운드)
-- 게임 간 공정한 비교가 불가능하고, 경험치 보상도 불균형
+- 랭킹은 게임별 독립이므로 점수 정규화 불필요
+- 그러나 플랫폼 경험치는 게임 간 공정해야 함 → 정규화 필요
+- 점수 설계는 게임 개발자에게 전적으로 위임
 
 ## 설계
 
 ### 핵심 원칙
 
-1. **프로토콜 불변** — GAME_OVER는 기존대로 `{ userId, gameId, score, playtime }`만 전송
-2. **플랫폼 정규화** — 게임별 `scoringConfig`를 플랫폼에 등록, 플랫폼이 정규화 수행
-3. **게임 자율성** — 난이도 차등, 패배 부분점수 등은 각 게임 자체에서 처리
+1. **점수는 게임 자율** — 게임이 보낸 raw score를 그대로 랭킹에 저장
+2. **EXP만 정규화** — 경험치 계산 시에만 raw score를 0~10,000으로 정규화
+3. **프로토콜 불변** — GAME_OVER는 기존대로 `{ userId, gameId, score, playtime }`만 전송
 4. **파라미터 1개** — 새 게임 등록 시 설정할 값은 1개뿐
 
-### 점수 아키텍처
+### 아키텍처
 
 ```
-┌─────────────┐     GAME_OVER      ┌──────────────────┐     정규화      ┌──────────────┐
-│  Game       │ ──────────────────→ │  Platform        │ ─────────────→ │  Ranking     │
-│  (iframe)   │  { score,          │  (game-player)   │                │  (DB)        │
-│             │    playtime }      │                  │                │              │
-│             │                    │  scoringConfig   │                │  score (Int) │
-│             │  프로토콜 변경 없음  │  으로 정규화      │                │  = 통합 점수  │
-└─────────────┘                    └──────────────────┘                └──────────────┘
+┌─────────────┐     GAME_OVER      ┌──────────────────┐                ┌──────────────┐
+│  Game       │ ──────────────────→ │  Platform API    │ ─── raw ────→ │  Ranking     │
+│  (iframe)   │  { score,          │                  │   score 저장   │  (DB)        │
+│             │    playtime }      │  normalizeScore  │                └──────────────┘
+│             │                    │  → calculateExp  │                ┌──────────────┐
+│             │  프로토콜 변경 없음  │                  │ ─── EXP ────→ │  User.exp    │
+└─────────────┘                    └──────────────────┘   경험치 반영   │  (DB)        │
+                                                                       └──────────────┘
 ```
 
 ### 게임 유형별 정규화 공식
@@ -111,15 +111,33 @@ const handleConfig: GameScoringConfig = {
 
 난이도 차등은 Handle 자체 배수(Easy 1x / Medium 3x / Hard 8x)로 이미 반영됨.
 
+### 경험치 계산
+
+정규화된 점수(0~10,000)를 기반으로 경험치를 계산한다.
+
+```
+scoreExp = normalizedScore × 0.01        (0~100 EXP)
+playtimeExp = (playtimeSeconds / 60) × 2  (~10 EXP per 5min)
+totalExp = max(scoreExp + playtimeExp, 1)  (최소 1 EXP)
+```
+
+| 시나리오            | 정규화 점수 | Score EXP | 플레이 5분 | 합계    |
+| ------------------- | ----------- | --------- | ---------- | ------- |
+| Kaboom Easy 평범    | 952         | 9         | 10         | **19**  |
+| Kaboom Hard 완벽    | 10,000      | 100       | 10         | **110** |
+| Handle Hard 1라운드 | 8,000       | 80        | 10         | **90**  |
+| Handle Easy 1라운드 | 3,333       | 33        | 10         | **43**  |
+
+레벨: `level = floor(totalExp / 100) + 1` (100 EXP당 1레벨)
+
 ### 데이터 흐름
 
 1. 게임 종료 → iframe이 `GAME_OVER` postMessage 전송 (기존 형식 그대로)
 2. `GamePlayer` 컴포넌트가 메시지 수신 및 Zod 검증
-3. 게임 코드로 해당 게임의 `scoringConfig` 조회
-4. 게임 유형(fixed/endless)에 따라 정규화 공식 적용
-5. `POST /api/games/{gameId}/ranking`에 **정규화된 점수** 전송
-6. Ranking 테이블에 upsert (최고 점수만 유지)
-7. 경험치 계산도 정규화된 점수 기반으로 전환
+3. `POST /api/games/{gameId}/ranking`에 **raw score** 전송
+4. API에서 게임 코드로 `scoringConfig` 조회 → 정규화 → 경험치 계산
+5. Ranking 테이블에 raw score upsert (최고 점수만 유지)
+6. User.exp에 경험치 반영
 
 ### 에러 처리
 
@@ -175,17 +193,18 @@ const survivalConfig: GameScoringConfig = {
 
 ## 구현 참고
 
-### 변경이 필요한 파일
+### 변경된 파일
 
-- `src/components/game/game-player.tsx` — 정규화 로직 추가
-- `src/app/api/games/[id]/ranking/route.ts` — 정규화된 점수로 저장
 - `src/constants/scoring.ts` (신규) — 정규화 함수, 게임별 config
+- `src/constants/exp.ts` — 정규화 점수 기반 EXP 계산 (multiplier 0.1 → 0.01)
+- `src/app/api/games/[id]/ranking/route.ts` — raw score 저장 + 정규화 EXP 계산
 
-### 변경이 필요 없는 것
+### 변경 없는 것
 
+- `src/components/game/game-player.tsx` — 변경 없음
 - `src/components/game/game-message-schema.ts` — 프로토콜 변경 없음
 - 게임 측 코드 — GAME_OVER 메시지 형식 변경 없음
 
 ### 하위 호환
 
-scoringConfig가 등록되지 않은 게임은 raw score를 그대로 저장한다.
+scoringConfig가 등록되지 않은 게임은 raw score를 그대로 EXP 계산에 사용한다.

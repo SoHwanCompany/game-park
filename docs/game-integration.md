@@ -146,15 +146,15 @@ const gameMessageSchema = z.discriminatedUnion('type', [
 
 ```
 Game: GAME_OVER { userId, gameId, score, playtime }
-  → Platform: 정규화 (raw score → 0~10,000 통합 점수)
-  → Platform: POST /api/games/{gameId}/ranking { score (정규화), playtime }
+  → Platform: POST /api/games/{gameId}/ranking { score (raw 그대로), playtime }
+  → Platform: 정규화 (raw score → 0~10,000) → 경험치 계산
   → 결과 화면 (점수, 랭킹, 다시하기)
 ```
 
 ## 점수 체계 (Scoring System)
 
-플랫폼은 모든 게임의 점수를 **0~10,000** 범위로 정규화하여 크로스게임 통합 랭킹을 제공한다.
-게임은 기존 프로토콜 그대로 raw score만 전송하고, 정규화는 플랫폼이 담당한다.
+- **랭킹 점수**: 게임이 보낸 raw score를 그대로 저장한다. 랭킹은 게임별 독립이므로 정규화 불필요.
+- **플랫폼 경험치**: raw score를 0~10,000으로 정규화한 뒤 경험치를 계산한다. 게임 간 공정한 EXP 보상을 위해 정규화가 필요.
 
 ### 게임 유형별 정규화 공식
 
