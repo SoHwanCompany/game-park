@@ -5,6 +5,7 @@ import { errorResponse, successResponse } from '@/lib/api';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { calculateExp } from '@/constants/exp';
+import { normalizeScore } from '@/constants/scoring';
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -31,20 +32,22 @@ export const POST = async (request: NextRequest, context: RouteContext): Promise
 
     const game = await prisma.game.findFirst({
       where: { id: gameId, status: 'PUBLISHED' },
-      select: { id: true },
+      select: { id: true, code: true },
     });
 
     if (!game) {
       return errorResponse('GAME_NOT_FOUND', 404);
     }
 
+    const score = normalizeScore(game.code, body.score);
+
     const existing = await prisma.ranking.findUnique({
       where: { userId_gameId: { userId, gameId } },
     });
 
-    const expGain = calculateExp(body.score, playtime);
+    const expGain = calculateExp(score, playtime);
 
-    if (existing && existing.score >= body.score) {
+    if (existing && existing.score >= score) {
       await prisma.user.update({
         where: { id: userId },
         data: { exp: { increment: expGain } },
@@ -58,8 +61,8 @@ export const POST = async (request: NextRequest, context: RouteContext): Promise
 
     const ranking = await prisma.ranking.upsert({
       where: { userId_gameId: { userId, gameId } },
-      update: { score: body.score },
-      create: { userId, gameId, score: body.score },
+      update: { score },
+      create: { userId, gameId, score },
     });
 
     await prisma.user.update({
