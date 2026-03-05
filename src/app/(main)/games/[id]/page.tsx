@@ -1,13 +1,23 @@
-import Link from 'next/link';
+import { unstable_cache } from 'next/cache';
 import { notFound } from 'next/navigation';
 
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { GamePlayer } from '@/components/game/game-player';
-import { Button } from '@/components/ui/button';
 
 import { LikeButton } from '../_components/like-button';
 import { UserRankingSection } from './_components/user-ranking-section';
+
+const getGame = unstable_cache(
+  async (id: string) => {
+    return prisma.game.findFirst({
+      where: { id, status: 'PUBLISHED' },
+      include: { category: { select: { code: true, name: true } } },
+    });
+  },
+  ['game-detail'],
+  { revalidate: 60, tags: ['games'] },
+);
 
 interface GameDetailPageProps {
   params: Promise<{ id: string }>;
@@ -17,21 +27,15 @@ export default async function GameDetailPage({ params }: GameDetailPageProps) {
   const { id } = await params;
   const session = await auth();
 
-  const game = await prisma.game.findFirst({
-    where: { id, status: 'PUBLISHED' },
-    include: {
-      category: { select: { code: true, name: true } },
-      ...(session?.user?.id
-        ? { gameLikes: { where: { userId: session.user.id }, select: { id: true } } }
-        : {}),
-    },
-  });
+  const game = await getGame(id);
 
   if (!game) {
     notFound();
   }
 
-  const isLiked = 'gameLikes' in game ? (game.gameLikes as { id: string }[]).length > 0 : false;
+  const isLiked = session?.user?.id
+    ? (await prisma.gameLike.count({ where: { userId: session.user.id, gameId: game.id } })) > 0
+    : false;
 
   let userInfo: { userId: string; nickname: string } | null = null;
 
@@ -75,9 +79,6 @@ export default async function GameDetailPage({ params }: GameDetailPageProps) {
             initialIsLiked={isLiked}
             isLoggedIn={Boolean(session?.user)}
           />
-          <Button variant="outline" size="sm" asChild>
-            <Link href={`/play/${game.id}`}>전체화면</Link>
-          </Button>
         </div>
       </div>
 

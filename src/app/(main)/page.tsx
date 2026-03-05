@@ -1,3 +1,4 @@
+import { unstable_cache } from 'next/cache';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -5,13 +6,21 @@ import { prisma } from '@/lib/prisma';
 import { DEFAULT_THUMBNAIL } from '@/constants/game';
 import { Button } from '@/components/ui/button';
 
+const getPopularGames = unstable_cache(
+  async () => {
+    return prisma.game.findMany({
+      where: { status: 'PUBLISHED' },
+      orderBy: { playCount: 'desc' },
+      take: 4,
+      include: { category: { select: { name: true } } },
+    });
+  },
+  ['popular-games'],
+  { revalidate: 60, tags: ['games'] },
+);
+
 export default async function HomePage() {
-  const popularGames = await prisma.game.findMany({
-    where: { status: 'PUBLISHED' },
-    orderBy: { playCount: 'desc' },
-    take: 4,
-    include: { category: { select: { name: true } } },
-  });
+  const popularGames = await getPopularGames();
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-12">
