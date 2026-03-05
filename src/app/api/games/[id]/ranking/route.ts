@@ -27,6 +27,8 @@ export const POST = async (request: NextRequest, context: RouteContext): Promise
       return errorResponse('VALIDATION_ERROR', 400);
     }
 
+    const rawScore = Math.round(body.score);
+
     const playtime =
       typeof body.playtime === 'number' && Number.isFinite(body.playtime) ? body.playtime : 0;
 
@@ -39,7 +41,7 @@ export const POST = async (request: NextRequest, context: RouteContext): Promise
       return errorResponse('GAME_NOT_FOUND', 404);
     }
 
-    const normalizedScore = normalizeScore(game.code, body.score);
+    const normalizedScore = normalizeScore(game.code, rawScore);
 
     const existing = await prisma.ranking.findUnique({
       where: { userId_gameId: { userId, gameId } },
@@ -47,7 +49,7 @@ export const POST = async (request: NextRequest, context: RouteContext): Promise
 
     const expGain = calculateExp(normalizedScore, playtime);
 
-    if (existing && existing.score >= body.score) {
+    if (existing && existing.score >= rawScore) {
       await prisma.user.update({
         where: { id: userId },
         data: { exp: { increment: expGain } },
@@ -61,8 +63,8 @@ export const POST = async (request: NextRequest, context: RouteContext): Promise
 
     const ranking = await prisma.ranking.upsert({
       where: { userId_gameId: { userId, gameId } },
-      update: { score: body.score },
-      create: { userId, gameId, score: body.score },
+      update: { score: rawScore },
+      create: { userId, gameId, score: rawScore },
     });
 
     await prisma.user.update({

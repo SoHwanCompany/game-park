@@ -27,7 +27,7 @@ export const normalizeScore = (gameCode: string, rawScore: number): number => {
   const config = SCORING_CONFIGS[gameCode];
 
   if (!config) {
-    return Math.max(0, Math.round(rawScore));
+    return Math.min(Math.max(0, Math.round(rawScore)), MAX_NORMALIZED_SCORE);
   }
 
   const clamped = Math.max(0, rawScore);
