@@ -1,17 +1,60 @@
+import { type Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { DEFAULT_THUMBNAIL } from '@/constants/game';
 import { GamePlayer } from '@/components/game/game-player';
 import { Button } from '@/components/ui/button';
 
 import { LikeButton } from '../_components/like-button';
 import { UserRankingSection } from './_components/user-ranking-section';
 
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://game-park.vercel.app';
+
 interface GameDetailPageProps {
   params: Promise<{ id: string }>;
 }
+
+const truncateDescription = (text: string, maxLength: number): string => {
+  if (text.length <= maxLength) {
+    return text;
+  }
+
+  return `${text.slice(0, maxLength)}...`;
+};
+
+const generateMetadata = async ({ params }: GameDetailPageProps): Promise<Metadata> => {
+  const { id } = await params;
+
+  const game = await prisma.game.findFirst({
+    where: { id, status: 'PUBLISHED' },
+    select: { title: true, description: true, thumbnailUrl: true },
+  });
+
+  if (!game) {
+    return {
+      title: '게임을 찾을 수 없습니다',
+    };
+  }
+
+  const description = truncateDescription(game.description, 155);
+  const images =
+    game.thumbnailUrl && game.thumbnailUrl !== DEFAULT_THUMBNAIL ? [game.thumbnailUrl] : [];
+
+  return {
+    title: game.title,
+    description,
+    openGraph: {
+      title: game.title,
+      description,
+      ...(images.length > 0 ? { images } : {}),
+    },
+  };
+};
+
+export { generateMetadata };
 
 export default async function GameDetailPage({ params }: GameDetailPageProps) {
   const { id } = await params;
@@ -46,8 +89,38 @@ export default async function GameDetailPage({ params }: GameDetailPageProps) {
     }
   }
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'VideoGame',
+    name: game.title,
+    description: game.description,
+    genre: game.category.name,
+    gamePlatform: 'Web Browser',
+    applicationCategory: 'Game',
+    playMode: 'SinglePlayer',
+    url: `${BASE_URL}/games/${game.id}`,
+    ...(game.thumbnailUrl && game.thumbnailUrl !== DEFAULT_THUMBNAIL
+      ? { image: game.thumbnailUrl }
+      : {}),
+    ...(game.likeCount > 0
+      ? {
+          aggregateRating: {
+            '@type': 'AggregateRating',
+            ratingValue: Math.min(5, Math.max(1, Math.round((game.likeCount / 10) * 4) + 1)),
+            bestRating: 5,
+            worstRating: 1,
+            ratingCount: game.likeCount,
+          },
+        }
+      : {}),
+  };
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <GamePlayer
         gameUrl={game.gameUrl}
         gameTitle={game.title}

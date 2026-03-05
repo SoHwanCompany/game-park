@@ -1,8 +1,13 @@
+import { type Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { GamePlayer } from '@/components/game/game-player';
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 interface PlayPageProps {
   params: Promise<{ id: string }>;
