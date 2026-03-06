@@ -111,8 +111,6 @@ export const FeedbackDetailView = ({ feedback, currentUserId }: FeedbackDetailVi
         </div>
       </CardContent>
 
-      <Separator />
-
       {isOwner ? (
         <>
           <Separator />
