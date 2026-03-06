@@ -1,3 +1,4 @@
+import { revalidateTag } from 'next/cache';
 import { type NextRequest } from 'next/server';
 
 import { errorResponse, successResponse } from '@/lib/api';
@@ -42,6 +43,8 @@ export const POST = async (_request: NextRequest, context: RouteContext): Promis
         }),
       ]);
 
+      revalidateTag('games', 'default');
+
       return successResponse(
         { isLiked: false, likeCount: updated.likeCount },
         '좋아요를 취소했습니다.',
@@ -56,6 +59,8 @@ export const POST = async (_request: NextRequest, context: RouteContext): Promis
         select: { likeCount: true },
       }),
     ]);
+
+    revalidateTag('games', 'default');
 
     return successResponse({ isLiked: true, likeCount: updated.likeCount }, '좋아요를 눌렀습니다.');
   } catch {

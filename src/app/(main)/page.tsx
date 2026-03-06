@@ -1,3 +1,5 @@
+import { type Metadata } from 'next';
+import { unstable_cache } from 'next/cache';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -5,16 +7,50 @@ import { prisma } from '@/lib/prisma';
 import { DEFAULT_THUMBNAIL } from '@/constants/game';
 import { Button } from '@/components/ui/button';
 
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://game-park.vercel.app';
+
+export const metadata: Metadata = {
+  title: { absolute: 'Game Park - 브라우저에서 바로 즐기는 무료 웹 게임' },
+  description:
+    '다양한 웹 게임을 브라우저에서 바로 플레이하세요. 퍼즐, 아케이드, 전략 게임까지. 랭킹에 도전하고 레벨을 올려보세요!',
+  openGraph: {
+    title: 'Game Park - 브라우저에서 바로 즐기는 무료 웹 게임',
+    description:
+      '다양한 웹 게임을 브라우저에서 바로 플레이하세요. 퍼즐, 아케이드, 전략 게임까지. 랭킹에 도전하고 레벨을 올려보세요!',
+  },
+};
+
+const getPopularGames = unstable_cache(
+  async () => {
+    return prisma.game.findMany({
+      where: { status: 'PUBLISHED' },
+      orderBy: { playCount: 'desc' },
+      take: 4,
+      include: { category: { select: { name: true } } },
+    });
+  },
+  ['popular-games'],
+  { revalidate: 60, tags: ['games'] },
+);
+
 export default async function HomePage() {
-  const popularGames = await prisma.game.findMany({
-    where: { status: 'PUBLISHED' },
-    orderBy: { playCount: 'desc' },
-    take: 4,
-    include: { category: { select: { name: true } } },
-  });
+  const popularGames = await getPopularGames();
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'Game Park',
+    url: BASE_URL,
+    description:
+      '다양한 웹 게임을 브라우저에서 바로 플레이하세요. 퍼즐, 아케이드, 전략 게임까지. 랭킹에 도전하고 레벨을 올려보세요!',
+  };
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-12">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <div className="space-y-2">
         <h1 className="text-4xl font-bold">Game Park</h1>
         <p className="text-muted-foreground text-lg">다양한 웹 게임을 즐길 수 있는 플랫폼</p>

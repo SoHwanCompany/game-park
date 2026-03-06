@@ -1,37 +1,84 @@
-import Link from 'next/link';
+import { type Metadata } from 'next';
+import { unstable_cache } from 'next/cache';
 import { notFound } from 'next/navigation';
 
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { DEFAULT_THUMBNAIL } from '@/constants/game';
 import { GamePlayer } from '@/components/game/game-player';
-import { Button } from '@/components/ui/button';
 
 import { LikeButton } from '../_components/like-button';
 import { UserRankingSection } from './_components/user-ranking-section';
+
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://game-park.vercel.app';
+
+const getGame = unstable_cache(
+  async (id: string) => {
+    return prisma.game.findFirst({
+      where: { id, status: 'PUBLISHED' },
+      include: { category: { select: { code: true, name: true } } },
+    });
+  },
+  ['game-detail'],
+  { revalidate: 60, tags: ['games'] },
+);
 
 interface GameDetailPageProps {
   params: Promise<{ id: string }>;
 }
 
+const truncateDescription = (text: string, maxLength: number): string => {
+  if (text.length <= maxLength) {
+    return text;
+  }
+
+  return `${text.slice(0, maxLength)}...`;
+};
+
+const generateMetadata = async ({ params }: GameDetailPageProps): Promise<Metadata> => {
+  const { id } = await params;
+
+  const game = await prisma.game.findFirst({
+    where: { id, status: 'PUBLISHED' },
+    select: { title: true, description: true, thumbnailUrl: true },
+  });
+
+  if (!game) {
+    return {
+      title: '게임을 찾을 수 없습니다',
+    };
+  }
+
+  const description = truncateDescription(game.description, 155);
+  const images =
+    game.thumbnailUrl && game.thumbnailUrl !== DEFAULT_THUMBNAIL ? [game.thumbnailUrl] : [];
+
+  return {
+    title: game.title,
+    description,
+    openGraph: {
+      title: game.title,
+      description,
+      ...(images.length > 0 ? { images } : {}),
+    },
+  };
+};
+
+export { generateMetadata };
+
 export default async function GameDetailPage({ params }: GameDetailPageProps) {
   const { id } = await params;
   const session = await auth();
 
-  const game = await prisma.game.findFirst({
-    where: { id, status: 'PUBLISHED' },
-    include: {
-      category: { select: { code: true, name: true } },
-      ...(session?.user?.id
-        ? { gameLikes: { where: { userId: session.user.id }, select: { id: true } } }
-        : {}),
-    },
-  });
+  const game = await getGame(id);
 
   if (!game) {
     notFound();
   }
 
-  const isLiked = 'gameLikes' in game ? (game.gameLikes as { id: string }[]).length > 0 : false;
+  const isLiked = session?.user?.id
+    ? (await prisma.gameLike.count({ where: { userId: session.user.id, gameId: game.id } })) > 0
+    : false;
 
   let userInfo: { userId: string; nickname: string } | null = null;
 
@@ -46,8 +93,38 @@ export default async function GameDetailPage({ params }: GameDetailPageProps) {
     }
   }
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'VideoGame',
+    name: game.title,
+    description: game.description,
+    genre: game.category.name,
+    gamePlatform: 'Web Browser',
+    applicationCategory: 'Game',
+    playMode: 'SinglePlayer',
+    url: `${BASE_URL}/games/${game.id}`,
+    ...(game.thumbnailUrl && game.thumbnailUrl !== DEFAULT_THUMBNAIL
+      ? { image: game.thumbnailUrl }
+      : {}),
+    ...(game.likeCount > 0
+      ? {
+          aggregateRating: {
+            '@type': 'AggregateRating',
+            ratingValue: Math.min(5, Math.max(1, Math.round((game.likeCount / 10) * 4) + 1)),
+            bestRating: 5,
+            worstRating: 1,
+            ratingCount: game.likeCount,
+          },
+        }
+      : {}),
+  };
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <GamePlayer
         gameUrl={game.gameUrl}
         gameTitle={game.title}
@@ -75,9 +152,6 @@ export default async function GameDetailPage({ params }: GameDetailPageProps) {
             initialIsLiked={isLiked}
             isLoggedIn={Boolean(session?.user)}
           />
-          <Button variant="outline" size="sm" asChild>
-            <Link href={`/play/${game.id}`}>전체화면</Link>
-          </Button>
         </div>
       </div>
 

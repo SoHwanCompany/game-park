@@ -1,4 +1,5 @@
 import { Prisma } from '@prisma/client';
+import { revalidateTag } from 'next/cache';
 import { type NextRequest } from 'next/server';
 
 import { errorResponse, successResponse } from '@/lib/api';
@@ -26,6 +27,8 @@ export const POST = async (_request: NextRequest, context: RouteContext): Promis
       data: { playCount: { increment: 1 } },
       select: { playCount: true },
     });
+
+    revalidateTag('games', 'default');
 
     return successResponse({ playCount: updated.playCount }, '플레이 카운트가 증가했습니다.');
   } catch (error) {
