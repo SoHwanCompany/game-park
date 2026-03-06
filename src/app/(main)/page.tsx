@@ -1,4 +1,5 @@
 import { type Metadata } from 'next';
+import { unstable_cache } from 'next/cache';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -19,13 +20,21 @@ export const metadata: Metadata = {
   },
 };
 
+const getPopularGames = unstable_cache(
+  async () => {
+    return prisma.game.findMany({
+      where: { status: 'PUBLISHED' },
+      orderBy: { playCount: 'desc' },
+      take: 4,
+      include: { category: { select: { name: true } } },
+    });
+  },
+  ['popular-games'],
+  { revalidate: 60, tags: ['games'] },
+);
+
 export default async function HomePage() {
-  const popularGames = await prisma.game.findMany({
-    where: { status: 'PUBLISHED' },
-    orderBy: { playCount: 'desc' },
-    take: 4,
-    include: { category: { select: { name: true } } },
-  });
+  const popularGames = await getPopularGames();
 
   const jsonLd = {
     '@context': 'https://schema.org',

@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 
 import { type Prisma } from '@prisma/client';
 import { type Metadata } from 'next';
+import { unstable_cache } from 'next/cache';
 
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
@@ -11,6 +12,44 @@ import { GameList } from './_components/game-list';
 import { SortSelect } from './_components/sort-select';
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://game-park.vercel.app';
+
+const getCategories = unstable_cache(
+  async () => {
+    return prisma.category.findMany({
+      where: { isActive: true },
+      orderBy: { sortOrder: 'asc' },
+      select: { code: true, name: true },
+    });
+  },
+  ['categories'],
+  { revalidate: 3600 },
+);
+
+const getGames = unstable_cache(
+  async (sort?: string, category?: string) => {
+    const orderBy: Prisma.GameOrderByWithRelationInput = (() => {
+      switch (sort) {
+        case 'title':
+          return { title: 'asc' };
+        case 'likes':
+          return { likeCount: 'desc' };
+        default:
+          return { createdAt: 'desc' };
+      }
+    })();
+
+    return prisma.game.findMany({
+      where: {
+        status: 'PUBLISHED',
+        ...(category && category !== 'all' ? { category: { code: category } } : {}),
+      },
+      orderBy,
+      include: { category: { select: { code: true, name: true } } },
+    });
+  },
+  ['games-list'],
+  { revalidate: 60, tags: ['games'] },
+);
 
 interface GamesPageProps {
   searchParams: Promise<{ category?: string; sort?: string }>;
@@ -50,38 +89,19 @@ export default async function GamesPage({ searchParams }: GamesPageProps) {
   const { category, sort } = await searchParams;
   const session = await auth();
 
-  const categories = await prisma.category.findMany({
-    where: { isActive: true },
-    orderBy: { sortOrder: 'asc' },
-    select: { code: true, name: true },
-  });
+  const categories = await getCategories();
+  const games = await getGames(sort, category);
 
-  const orderBy: Prisma.GameOrderByWithRelationInput = (() => {
-    switch (sort) {
-      case 'title':
-        return { title: 'asc' };
-      case 'likes':
-        return { likeCount: 'desc' };
-      default:
-        return { createdAt: 'desc' };
-    }
-  })();
+  let likedGameIds: Set<string> = new Set();
 
-  const where: Prisma.GameWhereInput = {
-    status: 'PUBLISHED',
-    ...(category && category !== 'all' ? { category: { code: category } } : {}),
-  };
+  if (session?.user?.id) {
+    const likes = await prisma.gameLike.findMany({
+      where: { userId: session.user.id, gameId: { in: games.map((g) => g.id) } },
+      select: { gameId: true },
+    });
 
-  const games = await prisma.game.findMany({
-    where,
-    orderBy,
-    include: {
-      category: { select: { code: true, name: true } },
-      ...(session?.user?.id
-        ? { gameLikes: { where: { userId: session.user.id }, select: { id: true } } }
-        : {}),
-    },
-  });
+    likedGameIds = new Set(likes.map((l) => l.gameId));
+  }
 
   const serializedGames = games.map((game) => ({
     id: game.id,
@@ -93,7 +113,7 @@ export default async function GamesPage({ searchParams }: GamesPageProps) {
     playCount: game.playCount,
     category: game.category,
     createdAt: game.createdAt.toISOString(),
-    isLiked: 'gameLikes' in game ? (game.gameLikes as { id: string }[]).length > 0 : false,
+    isLiked: likedGameIds.has(game.id),
   }));
 
   const jsonLd = {

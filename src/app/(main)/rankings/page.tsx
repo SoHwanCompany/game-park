@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 
 import { type Metadata } from 'next';
+import { unstable_cache } from 'next/cache';
 
 import { prisma } from '@/lib/prisma';
 import { type GameRankingSortType } from '@/types/ranking';
@@ -16,6 +17,42 @@ export const metadata: Metadata = {
     'Game Park 인기 게임 랭킹을 확인하세요. 최고 점수에 도전하고 랭킹 상위에 올라보세요!',
 };
 
+const getCategories = unstable_cache(
+  async () => {
+    return prisma.category.findMany({
+      where: { isActive: true },
+      orderBy: { sortOrder: 'asc' },
+      select: { code: true, name: true },
+    });
+  },
+  ['categories'],
+  { revalidate: 3600 },
+);
+
+const getRankedGames = unstable_cache(
+  async (sortType: string, category?: string) => {
+    return prisma.game.findMany({
+      where: {
+        status: 'PUBLISHED',
+        ...(category && category !== 'all' ? { category: { code: category } } : {}),
+      },
+      orderBy: sortType === 'plays' ? { playCount: 'desc' } : { likeCount: 'desc' },
+      take: GAME_RANKING_LIMIT,
+      select: {
+        id: true,
+        code: true,
+        title: true,
+        thumbnailUrl: true,
+        likeCount: true,
+        playCount: true,
+        category: { select: { code: true, name: true } },
+      },
+    });
+  },
+  ['ranked-games'],
+  { revalidate: 30, tags: ['games', 'rankings'] },
+);
+
 interface RankingsPageProps {
   searchParams: Promise<{ category?: string; sort?: string }>;
 }
@@ -24,29 +61,8 @@ export default async function RankingsPage({ searchParams }: RankingsPageProps) 
   const { category, sort } = await searchParams;
   const sortType: GameRankingSortType = sort === 'plays' ? 'plays' : 'likes';
 
-  const categories = await prisma.category.findMany({
-    where: { isActive: true },
-    orderBy: { sortOrder: 'asc' },
-    select: { code: true, name: true },
-  });
-
-  const games = await prisma.game.findMany({
-    where: {
-      status: 'PUBLISHED',
-      ...(category && category !== 'all' ? { category: { code: category } } : {}),
-    },
-    orderBy: sortType === 'plays' ? { playCount: 'desc' } : { likeCount: 'desc' },
-    take: GAME_RANKING_LIMIT,
-    select: {
-      id: true,
-      code: true,
-      title: true,
-      thumbnailUrl: true,
-      likeCount: true,
-      playCount: true,
-      category: { select: { code: true, name: true } },
-    },
-  });
+  const categories = await getCategories();
+  const games = await getRankedGames(sortType, category);
 
   const rankedGames = games.map((game, index) => ({
     ...game,

@@ -146,10 +146,101 @@ const gameMessageSchema = z.discriminatedUnion('type', [
 
 ```
 Game: GAME_OVER { userId, gameId, score, playtime }
-  → Platform: POST /api/ranks { gameId, userId, score }
-  → Platform: POST /api/histories { eventType: 'GAME_OVER', ... }
+  → Platform: POST /api/games/{gameId}/ranking { score (raw 그대로), playtime }
+  → Platform: 정규화 (raw score → 0~10,000) → 경험치 계산
   → 결과 화면 (점수, 랭킹, 다시하기)
 ```
+
+## 점수 체계 (Scoring System)
+
+- **랭킹 점수**: 게임이 보낸 raw score를 그대로 저장한다. 랭킹은 게임별 독립이므로 정규화 불필요.
+- **플랫폼 경험치**: raw score를 0~10,000으로 정규화한 뒤 경험치를 계산한다. 게임 간 공정한 EXP 보상을 위해 정규화가 필요.
+
+### 게임 유형별 정규화 공식
+
+게임은 두 유형으로 나뉘며, 각각 다른 정규화 공식을 사용한다:
+
+#### 고정형 (Fixed) — 클리어 조건이 있는 게임
+
+이론상 최고 점수가 정해져 있는 게임. 선형 정규화를 사용한다.
+
+```
+normalizedScore = (rawScore / maxRawScore) × 10,000
+```
+
+- `maxRawScore`: 게임의 이론상 최고 raw score (전 난이도 통틀어)
+- 예시: Kaboom (지뢰찾기) — Hard 완벽 클리어 = 3,150점이 최고
+
+#### 무한형 (Endless) — 실패할 때까지 계속하는 게임
+
+점수 상한이 없는 게임. 쌍곡선 정규화를 사용한다.
+
+```
+normalizedScore = 10,000 × rawScore / (rawScore + halfScore)
+```
+
+- `halfScore`: 이 점수를 받으면 통합 5,000점이 되는 기준점
+- 점수가 올라갈수록 수확 체감 (diminishing returns)
+- 예시: Handle (한글 퍼즐) — 무한 라운드, 라운드별 점수 누적
+
+### 게임 등록 시 점수 설정 (ScoringConfig)
+
+새 게임을 등록할 때 유형에 맞는 파라미터 1개만 설정한다:
+
+```typescript
+interface GameScoringConfig {
+  mode: 'fixed' | 'endless';
+
+  // fixed: 이론상 최고 raw score (전 난이도 통틀어)
+  maxRawScore?: number;
+
+  // endless: 통합 5,000점에 해당하는 raw score
+  halfScore?: number;
+}
+```
+
+난이도 차등은 각 게임의 자체 점수 공식에 이미 반영되어 있으므로
+플랫폼에서 별도로 난이도를 알 필요가 없다.
+
+### 등록 예시
+
+#### Kaboom (지뢰찾기) — 고정형
+
+```typescript
+const kaboomConfig: GameScoringConfig = {
+  mode: 'fixed',
+  maxRawScore: 3150, // Hard 완벽 클리어 시 최고점
+};
+
+// Easy 완벽 (500 raw)  → 500/3150 × 10,000 = 1,587점
+// Medium 완벽 (1,400 raw) → 1400/3150 × 10,000 = 4,444점
+// Hard 완벽 (3,150 raw)  → 3150/3150 × 10,000 = 10,000점
+// Hard 50% 사망 (~150 raw) → 150/3150 × 10,000 = 476점
+```
+
+#### Handle (한글 퍼즐) — 무한형
+
+```typescript
+const handleConfig: GameScoringConfig = {
+  mode: 'endless',
+  halfScore: 3000, // 3,000 raw → 통합 5,000점
+};
+
+// Hard 1라운드 (12,000 raw)  → 10,000 × 12000/(12000+3000) = 8,000점
+// Hard 3라운드 (36,000 raw)  → 10,000 × 36000/(36000+3000) = 9,231점
+// Hard 10라운드 (120,000 raw) → 10,000 × 120000/(120000+3000) = 9,756점
+// Easy 1라운드 (1,500 raw)   → 10,000 × 1500/(1500+3000) = 3,333점
+// Easy 2라운드 (3,000 raw)   → 10,000 × 3000/(3000+3000) = 5,000점
+```
+
+### 새 게임 등록 가이드
+
+1. **게임 유형 결정**: 클리어 조건이 있으면 `fixed`, 실패까지 계속하면 `endless`
+2. **파라미터 설정**:
+   - fixed → `maxRawScore`: 가장 어려운 난이도의 이론상 최고점
+   - endless → `halfScore`: "중급 실력자가 받을 법한 점수" 기준으로 설정
+3. **난이도 차등**: 게임 자체 점수 공식에서 처리 (플랫폼이 관여하지 않음)
+4. **패배 시 부분 점수**: 게임 자체에서 처리 권장 (raw score > 0으로 전송)
 
 ## 에러 처리
 
