@@ -18,11 +18,6 @@ export default async function FeedbackNewPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-12">
-      <div className="mb-8 space-y-2">
-        <h1 className="text-3xl font-bold">의견 작성</h1>
-        <p className="text-muted-foreground">Game Park에 대한 의견을 남겨주세요.</p>
-      </div>
-
       <FeedbackForm />
     </div>
   );

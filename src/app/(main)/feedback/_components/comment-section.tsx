@@ -2,10 +2,15 @@
 
 import { useState } from 'react';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { type FeedbackCommentItem } from '@/types/feedback';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
 
 import { CommentItem } from './comment-item';
 
@@ -46,11 +51,18 @@ export const CommentSection = ({ feedbackId, comments, currentUserId }: CommentS
   };
 
   return (
-    <div className="border-t pt-6">
-      <h2 className="mb-4 text-lg font-semibold">댓글 {comments.length}</h2>
+    <section className="mt-8 space-y-6">
+      <div className="flex items-center gap-3">
+        <h2 className="text-lg font-semibold">댓글</h2>
+        <Badge variant="secondary" className="tabular-nums">
+          {comments.length}
+        </Badge>
+      </div>
+
+      <Separator />
 
       {comments.length > 0 ? (
-        <div className="mb-6 space-y-3">
+        <div className="divide-border space-y-0 divide-y">
           {comments.map((comment) => (
             <CommentItem
               key={comment.id}
@@ -61,25 +73,40 @@ export const CommentSection = ({ feedbackId, comments, currentUserId }: CommentS
           ))}
         </div>
       ) : (
-        <p className="text-muted-foreground mb-6 text-sm">아직 댓글이 없습니다.</p>
+        <div className="flex flex-col items-center justify-center py-10 text-center">
+          <p className="text-muted-foreground text-sm">아직 댓글이 없습니다.</p>
+          <p className="text-muted-foreground mt-1 text-xs">첫 번째 댓글을 남겨보세요.</p>
+        </div>
       )}
 
       {currentUserId ? (
-        <form onSubmit={handleSubmit} className="flex gap-2">
-          <textarea
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <Textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="댓글을 입력해주세요"
-            rows={2}
-            className="border-input bg-background placeholder:text-muted-foreground focus-visible:ring-ring flex-1 rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none"
+            rows={3}
           />
-          <Button type="submit" disabled={isSubmitting || !content.trim()} className="self-end">
-            {isSubmitting ? '등록 중...' : '등록'}
-          </Button>
+
+          <div className="flex justify-end">
+            <Button type="submit" size="sm" disabled={isSubmitting || !content.trim()}>
+              {isSubmitting ? '등록 중...' : '등록'}
+            </Button>
+          </div>
         </form>
       ) : (
-        <p className="text-muted-foreground text-sm">댓글을 작성하려면 로그인이 필요합니다.</p>
+        <Card className="border-dashed">
+          <CardContent className="flex items-center justify-between py-4">
+            <p className="text-muted-foreground text-sm">댓글을 작성하려면 로그인이 필요합니다.</p>
+
+            <Link href="/login">
+              <Button variant="outline" size="sm">
+                로그인
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
       )}
-    </div>
+    </section>
   );
 };

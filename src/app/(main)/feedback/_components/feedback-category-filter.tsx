@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import { FEEDBACK_CATEGORIES } from '@/constants/feedback';
-import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 
 interface FeedbackCategoryFilterProps {
   currentCategory?: string;
@@ -31,23 +31,24 @@ export const FeedbackCategoryFilter = ({ currentCategory }: FeedbackCategoryFilt
 
   return (
     <div className="flex flex-wrap gap-2">
-      <Button
-        variant={active === 'all' ? 'default' : 'outline'}
-        size="sm"
-        onClick={() => handleCategoryChange('all')}
-      >
-        전체
-      </Button>
+      <button type="button" onClick={() => handleCategoryChange('all')}>
+        <Badge
+          variant={active === 'all' ? 'default' : 'outline'}
+          className="cursor-pointer px-3 py-1 text-sm transition-all duration-200 hover:shadow-sm"
+        >
+          전체
+        </Badge>
+      </button>
 
       {FEEDBACK_CATEGORIES.map((cat) => (
-        <Button
-          key={cat.value}
-          variant={active === cat.value ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => handleCategoryChange(cat.value)}
-        >
-          {cat.label}
-        </Button>
+        <button key={cat.value} type="button" onClick={() => handleCategoryChange(cat.value)}>
+          <Badge
+            variant={active === cat.value ? 'default' : 'outline'}
+            className="cursor-pointer px-3 py-1 text-sm transition-all duration-200 hover:shadow-sm"
+          >
+            {cat.label}
+          </Badge>
+        </button>
       ))}
     </div>
   );

@@ -5,14 +5,38 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
+import { cn } from '@/lib/utils';
 import { type FeedbackDetail } from '@/types/feedback';
 import { FEEDBACK_CATEGORY_MAP } from '@/constants/feedback';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 
 interface FeedbackDetailViewProps {
   feedback: FeedbackDetail;
   currentUserId?: string;
 }
+
+const AVATAR_COLORS = [
+  'bg-primary/15 text-primary',
+  'bg-destructive/15 text-destructive',
+  'bg-ring/15 text-ring',
+  'bg-accent-foreground/10 text-accent-foreground',
+  'bg-secondary-foreground/10 text-secondary-foreground',
+] as const;
+
+const getAvatarColor = (nickname: string): string => {
+  let hash = 0;
+
+  for (let i = 0; i < nickname.length; i++) {
+    hash = nickname.charCodeAt(i) + ((hash << 5) - hash);
+  }
+
+  const index = Math.abs(hash) % AVATAR_COLORS.length;
+
+  return AVATAR_COLORS[index];
+};
 
 export const FeedbackDetailView = ({ feedback, currentUserId }: FeedbackDetailViewProps) => {
   const router = useRouter();
@@ -31,6 +55,9 @@ export const FeedbackDetailView = ({ feedback, currentUserId }: FeedbackDetailVi
     day: 'numeric',
   });
 
+  const initial = feedback.user.nickname.charAt(0).toUpperCase();
+  const avatarColor = getAvatarColor(feedback.user.nickname);
+
   const handleDelete = async (): Promise<void> => {
     setIsDeleting(true);
 
@@ -47,25 +74,47 @@ export const FeedbackDetailView = ({ feedback, currentUserId }: FeedbackDetailVi
   };
 
   return (
-    <div className="mb-8">
-      <div className="mb-4 flex items-center gap-2">
-        <span className="bg-secondary text-secondary-foreground rounded-full px-2.5 py-0.5 text-xs font-medium">
-          {categoryLabel}
-        </span>
+    <Card>
+      <CardHeader className="space-y-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="secondary">{categoryLabel}</Badge>
 
-        {!feedback.isPublic ? <span className="text-muted-foreground text-xs">비공개</span> : null}
-      </div>
+          {!feedback.isPublic ? <Badge variant="outline">비공개</Badge> : null}
+        </div>
 
-      <h1 className="mb-2 text-2xl font-bold">{feedback.title}</h1>
+        <h1 className="text-xl font-bold tracking-tight md:text-2xl">{feedback.title}</h1>
 
-      <div className="text-muted-foreground mb-6 flex items-center gap-2 text-sm">
-        <span>{feedback.user.nickname}</span>
-        <span>{date}</span>
-      </div>
+        <div className="flex items-center gap-3">
+          <div
+            className={cn(
+              'flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold',
+              avatarColor,
+            )}
+          >
+            {initial}
+          </div>
 
-      <div className="prose prose-sm mb-6 whitespace-pre-wrap">{feedback.content}</div>
+          <div className="text-muted-foreground flex items-center gap-1.5 text-sm">
+            <span className="text-foreground font-medium">{feedback.user.nickname}</span>
+            <span aria-hidden="true">·</span>
+            <time dateTime={feedback.createdAt}>{date}</time>
+          </div>
+        </div>
+      </CardHeader>
 
-      <div className="flex items-center gap-2">
+      <Separator />
+
+      <CardContent>
+        <div className="bg-muted/50 rounded-lg p-4 md:p-5">
+          <p className="text-sm leading-relaxed whitespace-pre-wrap md:text-base">
+            {feedback.content}
+          </p>
+        </div>
+      </CardContent>
+
+      <Separator />
+
+      <CardFooter className="justify-end gap-2">
         <Link href="/feedback">
           <Button variant="outline" size="sm">
             목록으로
@@ -77,7 +126,7 @@ export const FeedbackDetailView = ({ feedback, currentUserId }: FeedbackDetailVi
             {isDeleting ? '삭제 중...' : '삭제'}
           </Button>
         ) : null}
-      </div>
-    </div>
+      </CardFooter>
+    </Card>
   );
 };
