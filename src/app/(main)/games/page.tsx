@@ -112,7 +112,7 @@ export default async function GamesPage({ searchParams }: GamesPageProps) {
     likeCount: game.likeCount,
     playCount: game.playCount,
     category: game.category,
-    createdAt: game.createdAt.toISOString(),
+    createdAt: new Date(game.createdAt).toISOString(),
     isLiked: likedGameIds.has(game.id),
   }));
 
