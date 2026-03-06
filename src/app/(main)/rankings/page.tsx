@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
 
+import { type Metadata } from 'next';
 import { unstable_cache } from 'next/cache';
 
 import { prisma } from '@/lib/prisma';
@@ -9,6 +10,12 @@ import { GAME_RANKING_LIMIT } from '@/constants/ranking';
 import { CategoryFilter } from '../_components/category-filter';
 import { GameRankingList } from './_components/game-ranking-list';
 import { RankingSortToggle } from './_components/ranking-sort-toggle';
+
+export const metadata: Metadata = {
+  title: '게임 랭킹',
+  description:
+    'Game Park 인기 게임 랭킹을 확인하세요. 최고 점수에 도전하고 랭킹 상위에 올라보세요!',
+};
 
 const getCategories = unstable_cache(
   async () => {

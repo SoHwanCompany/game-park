@@ -1,3 +1,4 @@
+import { type Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
 import { auth } from '@/lib/auth';
@@ -6,6 +7,11 @@ import { calculateLevel } from '@/constants/exp';
 
 import { ProfileForm } from './_components/profile-form';
 import { WithdrawButton } from './_components/withdraw-button';
+
+export const metadata: Metadata = {
+  title: '마이페이지',
+  robots: { index: false, follow: false },
+};
 
 export default async function MypagePage() {
   const session = await auth();
