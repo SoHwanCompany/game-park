@@ -93,6 +93,14 @@ const games = [
     categoryCode: 'puzzle',
     gameUrl: 'https://example.com/games/kaboom',
   },
+  {
+    code: 'handle',
+    title: '한들',
+    description:
+      '한글 자모를 조합하여 숨겨진 단어를 맞추는 퍼즐 게임! 주어진 자모 조각을 올바른 위치에 배치하여 정답 단어를 완성하세요. 라운드를 거듭할수록 점수가 쌓이는 무한 도전 모드를 즐겨보세요.',
+    categoryCode: 'puzzle',
+    gameUrl: 'https://example.com/games/handle',
+  },
 ];
 
 const main = async (): Promise<void> => {
