@@ -27,6 +27,14 @@ enum GameStatus {
   ARCHIVED
 }
 
+enum FeedbackCategory {
+  BUG
+  FEATURE
+  GENERAL
+  GAME_REQUEST
+  OTHER
+}
+
 // ─── Auth.js Models ─────────────────────────────────────────
 
 model User {
@@ -42,10 +50,12 @@ model User {
   createdAt       DateTime   @default(now()) @map("created_at")
   updatedAt       DateTime   @updatedAt @map("updated_at")
 
-  accounts  Account[]
-  sessions  Session[]
-  gameLikes GameLike[]
-  rankings  Ranking[]
+  accounts         Account[]
+  sessions         Session[]
+  gameLikes        GameLike[]
+  rankings         Ranking[]
+  feedbacks        Feedback[]
+  feedbackComments FeedbackComment[]
 
   @@map("users")
 }
@@ -161,4 +171,37 @@ model Ranking {
   @@unique([userId, gameId])
   @@index([gameId, score(sort: Desc), updatedAt(sort: Asc)])
   @@map("rankings")
+}
+
+model Feedback {
+  id             String           @id @default(cuid())
+  userId         String           @map("user_id")
+  title          String           @db.VarChar(100)
+  content        String
+  category       FeedbackCategory @default(GENERAL)
+  customCategory String?          @map("custom_category") @db.VarChar(50)
+  isPublic       Boolean          @default(true) @map("is_public")
+  createdAt      DateTime         @default(now()) @map("created_at")
+  updatedAt      DateTime         @updatedAt @map("updated_at")
+
+  user     User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comments FeedbackComment[]
+
+  @@index([userId])
+  @@index([isPublic, createdAt(sort: Desc)])
+  @@map("feedbacks")
+}
+
+model FeedbackComment {
+  id         String   @id @default(cuid())
+  feedbackId String   @map("feedback_id")
+  userId     String   @map("user_id")
+  content    String
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  feedback Feedback @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([feedbackId])
+  @@map("feedback_comments")
 }
