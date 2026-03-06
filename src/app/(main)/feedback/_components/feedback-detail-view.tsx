@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { cn } from '@/lib/utils';
@@ -114,19 +113,17 @@ export const FeedbackDetailView = ({ feedback, currentUserId }: FeedbackDetailVi
 
       <Separator />
 
-      <CardFooter className="justify-end gap-2">
-        <Link href="/feedback">
-          <Button variant="outline" size="sm">
-            목록으로
-          </Button>
-        </Link>
+      {isOwner ? (
+        <>
+          <Separator />
 
-        {isOwner ? (
-          <Button variant="destructive" size="sm" onClick={handleDelete} disabled={isDeleting}>
-            {isDeleting ? '삭제 중...' : '삭제'}
-          </Button>
-        ) : null}
-      </CardFooter>
+          <CardFooter className="justify-end">
+            <Button variant="destructive" size="sm" onClick={handleDelete} disabled={isDeleting}>
+              {isDeleting ? '삭제 중...' : '삭제'}
+            </Button>
+          </CardFooter>
+        </>
+      ) : null}
     </Card>
   );
 };
