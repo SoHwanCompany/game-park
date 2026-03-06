@@ -51,6 +51,9 @@ export const Header = async () => {
           <Link href="/rankings" className="text-muted-foreground hover:text-foreground text-sm">
             랭킹
           </Link>
+          <Link href="/feedback" className="text-muted-foreground hover:text-foreground text-sm">
+            의견
+          </Link>
 
           {session?.user ? (
             <>
