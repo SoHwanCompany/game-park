@@ -71,16 +71,17 @@ export default async function FeedbackDetailPage({ params }: FeedbackDetailPageP
     notFound();
   }
 
+  const isAdmin = currentUserId
+    ? (
+        await prisma.user.findUnique({
+          where: { id: currentUserId },
+          select: { role: true },
+        })
+      )?.role === 'ADMIN'
+    : false;
+
   if (!feedback.isPublic) {
     const isOwner = currentUserId === feedback.user.id;
-    const isAdmin = currentUserId
-      ? (
-          await prisma.user.findUnique({
-            where: { id: currentUserId },
-            select: { role: true },
-          })
-        )?.role === 'ADMIN'
-      : false;
 
     if (!isOwner && !isAdmin) {
       notFound();
@@ -122,7 +123,7 @@ export default async function FeedbackDetailPage({ params }: FeedbackDetailPageP
         의견 게시판
       </Link>
 
-      <FeedbackDetailView feedback={serialized} currentUserId={currentUserId} />
+      <FeedbackDetailView feedback={serialized} currentUserId={currentUserId} isAdmin={isAdmin} />
 
       <CommentSection
         feedbackId={id}

@@ -12,9 +12,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 
+import { AdminStatusControl } from './admin-status-control';
+import { StatusTimeline } from './status-timeline';
+
 interface FeedbackDetailViewProps {
   feedback: FeedbackDetail;
   currentUserId?: string;
+  isAdmin?: boolean;
 }
 
 const AVATAR_COLORS = [
@@ -45,7 +49,11 @@ const getAvatarColor = (nickname: string): string => {
   return AVATAR_COLORS[index];
 };
 
-export const FeedbackDetailView = ({ feedback, currentUserId }: FeedbackDetailViewProps) => {
+export const FeedbackDetailView = ({
+  feedback,
+  currentUserId,
+  isAdmin,
+}: FeedbackDetailViewProps) => {
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -132,6 +140,20 @@ export const FeedbackDetailView = ({ feedback, currentUserId }: FeedbackDetailVi
             {feedback.content}
           </p>
         </div>
+
+        {feedback.statusLogs.length > 0 ? (
+          <>
+            <Separator className="my-4" />
+            <StatusTimeline logs={feedback.statusLogs} />
+          </>
+        ) : null}
+
+        {isAdmin ? (
+          <>
+            <Separator className="my-4" />
+            <AdminStatusControl feedbackId={feedback.id} currentStatus={feedback.status} />
+          </>
+        ) : null}
       </CardContent>
 
       {isOwner ? (
