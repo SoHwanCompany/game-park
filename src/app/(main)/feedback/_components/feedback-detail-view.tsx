@@ -13,6 +13,7 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator';
 
 import { AdminStatusControl } from './admin-status-control';
+import { ReportButton } from './report-button';
 import { StatusTimeline } from './status-timeline';
 
 interface FeedbackDetailViewProps {
@@ -129,6 +130,12 @@ export const FeedbackDetailView = ({
             <span aria-hidden="true">·</span>
             <time dateTime={feedback.createdAt}>{date}</time>
           </div>
+
+          {!isOwner && currentUserId ? (
+            <div className="ml-auto">
+              <ReportButton targetType="FEEDBACK" targetId={feedback.id} />
+            </div>
+          ) : null}
         </div>
       </CardHeader>
 
