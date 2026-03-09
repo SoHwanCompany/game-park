@@ -10,6 +10,7 @@ export const GET = async (request: NextRequest): Promise<Response> => {
   try {
     const { searchParams } = request.nextUrl;
     const category = searchParams.get('category');
+    const gameId = searchParams.get('gameId');
     const page = Math.max(1, Number(searchParams.get('page') ?? '1'));
 
     const session = await auth();
@@ -17,6 +18,7 @@ export const GET = async (request: NextRequest): Promise<Response> => {
 
     const where = {
       ...(category && category !== 'all' ? { category: category as FeedbackCategory } : {}),
+      ...(gameId ? { gameId } : {}),
       OR: [{ isPublic: true }, ...(currentUserId ? [{ userId: currentUserId }] : [])],
     };
 
@@ -31,9 +33,11 @@ export const GET = async (request: NextRequest): Promise<Response> => {
           title: true,
           category: true,
           customCategory: true,
+          status: true,
           isPublic: true,
           createdAt: true,
           user: { select: { nickname: true } },
+          game: { select: { title: true } },
           _count: { select: { comments: true } },
         },
       }),
@@ -76,10 +80,11 @@ export const POST = async (request: NextRequest): Promise<Response> => {
       content?: string;
       category?: FeedbackCategory;
       customCategory?: string;
+      gameId?: string;
       isPublic?: boolean;
     };
 
-    const { title, content, category, customCategory, isPublic } = body;
+    const { title, content, category, customCategory, gameId, isPublic } = body;
 
     if (!title?.trim() || !content?.trim()) {
       return errorResponse('VALIDATION_ERROR', 400);
@@ -92,6 +97,7 @@ export const POST = async (request: NextRequest): Promise<Response> => {
         content: content.trim(),
         category: category ?? 'GENERAL',
         customCategory: category === 'OTHER' ? customCategory?.trim() : null,
+        gameId: gameId ?? null,
         isPublic: isPublic ?? true,
       },
       select: { id: true },
