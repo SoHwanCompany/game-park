@@ -40,9 +40,11 @@ export default async function FeedbackDetailPage({ params }: FeedbackDetailPageP
       content: true,
       category: true,
       customCategory: true,
+      status: true,
       isPublic: true,
       createdAt: true,
       user: { select: { id: true, nickname: true } },
+      game: { select: { id: true, title: true } },
       comments: {
         orderBy: { createdAt: 'asc' },
         select: {
@@ -50,6 +52,16 @@ export default async function FeedbackDetailPage({ params }: FeedbackDetailPageP
           content: true,
           createdAt: true,
           user: { select: { id: true, nickname: true } },
+        },
+      },
+      statusLogs: {
+        orderBy: { createdAt: 'asc' },
+        select: {
+          id: true,
+          status: true,
+          comment: true,
+          createdAt: true,
+          user: { select: { nickname: true } },
         },
       },
     },
@@ -81,6 +93,10 @@ export default async function FeedbackDetailPage({ params }: FeedbackDetailPageP
     comments: feedback.comments.map((c) => ({
       ...c,
       createdAt: new Date(c.createdAt).toISOString(),
+    })),
+    statusLogs: feedback.statusLogs.map((log) => ({
+      ...log,
+      createdAt: new Date(log.createdAt).toISOString(),
     })),
   };
 
