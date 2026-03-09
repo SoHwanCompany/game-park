@@ -2,7 +2,7 @@ import Link from 'next/link';
 
 import { cn } from '@/lib/utils';
 import { type FeedbackSummary } from '@/types/feedback';
-import { FEEDBACK_CATEGORY_MAP } from '@/constants/feedback';
+import { FEEDBACK_CATEGORY_MAP, FEEDBACK_STATUS_MAP } from '@/constants/feedback';
 import { Badge } from '@/components/ui/badge';
 
 interface FeedbackItemProps {
@@ -15,6 +15,14 @@ const CATEGORY_ACCENT: Record<string, string> = {
   GENERAL: 'border-l-muted-foreground',
   GAME_REQUEST: 'border-l-accent-foreground',
   OTHER: 'border-l-border',
+};
+
+const STATUS_STYLE: Record<string, string> = {
+  PENDING: 'bg-muted text-muted-foreground',
+  CONFIRMED: 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300',
+  IN_REVIEW: 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300',
+  RESOLVED: 'bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300',
+  DEFERRED: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
 };
 
 export const FeedbackItem = ({ feedback }: FeedbackItemProps) => {
@@ -39,6 +47,23 @@ export const FeedbackItem = ({ feedback }: FeedbackItemProps) => {
       <div className="min-w-0 flex-1">
         <div className="mb-2 flex flex-wrap items-center gap-2">
           <Badge variant={badgeVariant}>{categoryLabel}</Badge>
+
+          {feedback.status !== 'PENDING' ? (
+            <span
+              className={cn(
+                'rounded-full px-2 py-0.5 text-xs font-medium',
+                STATUS_STYLE[feedback.status],
+              )}
+            >
+              {FEEDBACK_STATUS_MAP[feedback.status]}
+            </span>
+          ) : null}
+
+          {feedback.game ? (
+            <Badge variant="outline" className="gap-1 text-xs">
+              🎮 {feedback.game.title}
+            </Badge>
+          ) : null}
 
           {!feedback.isPublic ? (
             <Badge variant="outline" className="text-muted-foreground gap-1">

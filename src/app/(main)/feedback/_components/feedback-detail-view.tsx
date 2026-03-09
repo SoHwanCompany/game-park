@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 
 import { cn } from '@/lib/utils';
 import { type FeedbackDetail } from '@/types/feedback';
-import { FEEDBACK_CATEGORY_MAP } from '@/constants/feedback';
+import { FEEDBACK_CATEGORY_MAP, FEEDBACK_STATUS_MAP } from '@/constants/feedback';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
@@ -24,6 +24,14 @@ const AVATAR_COLORS = [
   'bg-accent-foreground/10 text-accent-foreground',
   'bg-secondary-foreground/10 text-secondary-foreground',
 ] as const;
+
+const STATUS_STYLE: Record<string, string> = {
+  PENDING: 'bg-muted text-muted-foreground',
+  CONFIRMED: 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300',
+  IN_REVIEW: 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300',
+  RESOLVED: 'bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300',
+  DEFERRED: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
+};
 
 const getAvatarColor = (nickname: string): string => {
   let hash = 0;
@@ -77,6 +85,21 @@ export const FeedbackDetailView = ({ feedback, currentUserId }: FeedbackDetailVi
       <CardHeader className="space-y-3">
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="secondary">{categoryLabel}</Badge>
+
+          <span
+            className={cn(
+              'rounded-full px-2 py-0.5 text-xs font-medium',
+              STATUS_STYLE[feedback.status],
+            )}
+          >
+            {FEEDBACK_STATUS_MAP[feedback.status]}
+          </span>
+
+          {feedback.game ? (
+            <Badge variant="outline" className="gap-1">
+              🎮 {feedback.game.title}
+            </Badge>
+          ) : null}
 
           {!feedback.isPublic ? <Badge variant="outline">비공개</Badge> : null}
         </div>
