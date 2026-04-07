@@ -14,6 +14,8 @@ const ERROR_CODES = {
   COMMENT_NOT_FOUND: '댓글을 찾을 수 없습니다.',
   FORBIDDEN: '권한이 없습니다.',
   USER_SUSPENDED: '정지된 계정입니다.',
+  ALREADY_REPORTED: '이미 신고한 게시글입니다.',
+  REPORT_NOT_FOUND: '신고를 찾을 수 없습니다.',
   INTERNAL_ERROR: '서버 오류가 발생했습니다.',
 } as const;
 

@@ -1,16 +1,16 @@
-import { PrismaAdapter } from '@auth/prisma-adapter';
 import bcrypt from 'bcryptjs';
 import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 
 import { prisma } from '@/lib/prisma';
+import { createCustomAdapter } from '@/lib/prisma-adapter';
 import { loginSchema } from '@/app/(auth)/_schemas/auth';
 
 import { authConfig } from './auth.config';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
-  adapter: PrismaAdapter(prisma),
+  adapter: createCustomAdapter(),
   session: { strategy: 'jwt', maxAge: 7 * 24 * 60 * 60 },
   providers: [
     ...authConfig.providers,

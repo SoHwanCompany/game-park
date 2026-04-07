@@ -17,6 +17,7 @@
     "**/*.stories.{ts,tsx}",
     "src/components/ui/**",
     "src/constants/index.ts",
+    "src/constants/feedback.ts",
     "src/types/index.ts",
     "src/lib/utils.ts",
     "src/lib/auth.ts"
