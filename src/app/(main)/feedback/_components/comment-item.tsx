@@ -8,6 +8,8 @@ import { cn } from '@/lib/utils';
 import { type FeedbackCommentItem } from '@/types/feedback';
 import { Button } from '@/components/ui/button';
 
+import { ReportButton } from './report-button';
+
 interface CommentItemProps {
   comment: FeedbackCommentItem;
   feedbackId: string;
@@ -136,6 +138,12 @@ export const CommentItem = ({ comment, feedbackId, currentUserId }: CommentItemP
             >
               {isDeleting ? '삭제 중' : '삭제'}
             </Button>
+          ) : null}
+
+          {!isOwner && currentUserId ? (
+            <div className="opacity-0 transition-opacity group-hover:opacity-100">
+              <ReportButton targetType="COMMENT" targetId={comment.id} />
+            </div>
           ) : null}
         </div>
 

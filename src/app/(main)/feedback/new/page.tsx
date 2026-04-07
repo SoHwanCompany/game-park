@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
 import { auth } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
 
 import { FeedbackForm } from '../_components/feedback-form';
 
@@ -16,6 +17,12 @@ export default async function FeedbackNewPage() {
   if (!session?.user) {
     redirect('/login');
   }
+
+  const games = await prisma.game.findMany({
+    where: { status: 'PUBLISHED' },
+    select: { id: true, title: true },
+    orderBy: { title: 'asc' },
+  });
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-12">
@@ -39,7 +46,7 @@ export default async function FeedbackNewPage() {
         의견 게시판
       </Link>
 
-      <FeedbackForm />
+      <FeedbackForm games={games} />
     </div>
   );
 }

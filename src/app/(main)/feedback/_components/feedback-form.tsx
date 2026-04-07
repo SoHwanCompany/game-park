@@ -22,7 +22,18 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 
+import { GameSelect } from './game-select';
+
 const TITLE_MAX_LENGTH = 100;
+
+interface GameOption {
+  id: string;
+  title: string;
+}
+
+interface FeedbackFormProps {
+  games: GameOption[];
+}
 
 const CATEGORY_EMOJI: Record<string, string> = {
   BUG: '\uD83D\uDC1B',
@@ -32,7 +43,7 @@ const CATEGORY_EMOJI: Record<string, string> = {
   OTHER: '\uD83D\uDD0D',
 };
 
-export const FeedbackForm = (): React.ReactNode => {
+export const FeedbackForm = ({ games }: FeedbackFormProps): React.ReactNode => {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [category, setCategory] = useState<FeedbackCategory>('GENERAL');
@@ -40,6 +51,7 @@ export const FeedbackForm = (): React.ReactNode => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [isPublic, setIsPublic] = useState(true);
+  const [gameId, setGameId] = useState<string | null>(null);
 
   const titleRemaining = TITLE_MAX_LENGTH - title.length;
 
@@ -61,6 +73,7 @@ export const FeedbackForm = (): React.ReactNode => {
           content: content.trim(),
           category,
           customCategory: category === 'OTHER' ? customCategory.trim() : undefined,
+          gameId,
           isPublic,
         }),
       });
@@ -126,6 +139,8 @@ export const FeedbackForm = (): React.ReactNode => {
               />
             </div>
           ) : null}
+
+          <GameSelect games={games} value={gameId} onChange={setGameId} />
 
           <Separator />
 
