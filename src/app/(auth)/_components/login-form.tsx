@@ -117,14 +117,28 @@ export const LoginForm = () => {
         </div>
       </div>
 
-      <div className="flex flex-col gap-2">
-        <Button variant="outline" className="w-full" onClick={() => handleSocialLogin('google')}>
-          Google로 로그인
-        </Button>
-        <Button variant="outline" className="w-full" onClick={() => handleSocialLogin('kakao')}>
-          Kakao로 로그인
-        </Button>
-      </div>
+      <Button
+        type="button"
+        className="w-full bg-[#FEE500] text-[#191919] hover:bg-[#FDD835]"
+        onClick={() => handleSocialLogin('kakao')}
+      >
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 18 18"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          className="mr-2"
+        >
+          <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M9 0.6C4.029 0.6 0 3.726 0 7.554C0 9.918 1.558 12.002 3.931 13.244L2.933 16.844C2.845 17.156 3.213 17.402 3.483 17.218L7.873 14.356C8.242 14.398 8.617 14.42 9 14.42C13.971 14.42 18 11.294 18 7.466C18 3.638 13.971 0.6 9 0.6Z"
+            fill="#191919"
+          />
+        </svg>
+        카카오 로그인
+      </Button>
 
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
