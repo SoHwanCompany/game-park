@@ -1,21 +1,17 @@
 import { type NextAuthConfig } from 'next-auth';
-import Google from 'next-auth/providers/google';
 import Kakao from 'next-auth/providers/kakao';
 
 export const authConfig = {
   providers: [
-    Google({
-      clientId: process.env.AUTH_GOOGLE_ID,
-      clientSecret: process.env.AUTH_GOOGLE_SECRET,
-    }),
     Kakao({
       clientId: process.env.AUTH_KAKAO_ID,
       clientSecret: process.env.AUTH_KAKAO_SECRET,
+      authorization: 'https://kauth.kakao.com/oauth/authorize?scope=profile_nickname+profile_image',
+      checks: ['state'],
     }),
   ],
   pages: {
     signIn: '/login',
-    newUser: '/register',
   },
   callbacks: {
     jwt: ({ token, user }) => {
