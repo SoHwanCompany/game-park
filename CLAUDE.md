@@ -2,6 +2,16 @@
 
 코드 작성 시 이 파일의 규칙을 따른다.
 
+## 세션 시작 시
+
+새 대화가 시작되면 `docs/roadmap.md`를 **Read 도구로 읽고** 다음을 수행한다:
+
+1. 현재 스프린트의 진행 상황을 간단히 요약한다 (완료/전체, 진행률)
+2. 다음 작업을 제안한다 (`[~]` 진행 중 우선, 없으면 `[ ]` 미완료 중 선택)
+3. 사용자에게 "이 작업을 시작할까요?" 확인한다
+
+> 사용자가 다른 주제로 대화를 시작하면 로드맵 확인을 건너뛰어도 된다.
+
 ## 프로젝트 개요
 
 Game Park는 브라우저 기반 웹 게임 플랫폼이다.
@@ -17,6 +27,7 @@ Game Park는 브라우저 기반 웹 게임 플랫폼이다.
 > 3. 이 파일의 규칙과 대조하며 코드를 작성한다
 > 4. 코드 작성이 끝나면 `pnpm lint:fix && pnpm format`을 실행한다
 > 5. 에러가 있으면 수정 후 4번을 반복한다. 에러가 없을 때까지 반복한다
+> 6. Claude 설정(`.claude/`, `docs/claude-agents.md`)을 변경했다면 `pnpm sync:codex-config`를 실행해 Codex 설정(`.Codex/`, `docs/Codex-agents.md`)도 함께 동기화한다
 
 ## 기술 스택
 
@@ -30,6 +41,7 @@ pnpm build            # 프로덕션 빌드
 pnpm lint             # ESLint 검사
 pnpm lint:fix         # ESLint 자동 수정
 pnpm format           # Prettier 포맷팅
+pnpm sync:codex-config # .claude 설정을 .Codex 설정으로 동기화
 pnpm type-check       # TypeScript 타입 검사
 pnpm knip             # 미사용 코드 검사
 pnpm validate         # 전체 검사 (type-check + lint + knip)
@@ -342,7 +354,10 @@ Claude는 작업 중 발견한 프로젝트 지식을 `.claude/memory/`에 자�
 ├── doc-writer.md       # 문서 작성 (Sonnet)
 ├── implementer.md      # 기능 구현 (inherit)
 ├── ui-designer.md      # AI 주도 UI 설계/구현 (inherit)
-└── game-integrator.md  # iframe 게임 통합 (Sonnet)
+├── game-integrator.md  # iframe 게임 통합 (Sonnet)
+├── product-advisor.md  # 제품 판단 (inherit)
+├── qa-engineer.md      # QA 검증 (inherit)
+└── release-manager.md  # 릴리즈 관리 (Sonnet)
 ```
 
 > 상세: `docs/claude-agents.md`
@@ -351,26 +366,30 @@ Claude는 작업 중 발견한 프로젝트 지식을 `.claude/memory/`에 자�
 
 ```
 .claude/commands/
-├── git/    commit.md · push.md · pr.md
-├── code/   component.md · story.md · feature.md · page.md · api.md · socket.md · hook.md · test.md · game.md · admin.md · design.md · schema.md
-└── dev/    validate.md · review.md · refactor.md · brainstorm.md · seed.md
+├── git/    commit.md · push.md · pr.md · release.md
+├── code/   component.md · story.md · feature.md · page.md · api.md · socket.md · hook.md · test.md · game.md · admin.md · design.md · schema.md · figma.md
+└── dev/    validate.md · review.md · refactor.md · brainstorm.md · seed.md · office-hours.md · qa.md · review-branch.md
 ```
 
 ## 추천 워크플로우
 
-### 기능 개발 흐름
+### 기능 개발 흐름 (gstack 워크플로우)
 
 ```
-1. /brainstorm <기능명>          → 설계 확정 (디자이너 없으므로 필수)
-2. /code:schema (필요시)         → DB 모델 변경
-3. /code:design <설명>           → AI 주도 UI 설계
-4. /code:game 또는 /code:page    → 스캐폴딩
-5. /code:component + /code:story → 컴포넌트 + Storybook
-6. /code:api                     → API 라우트
-7. /code:test                    → 테스트
-8. /validate --fix               → 검증
-9. /commit → /push → /pr         → 배포
+1. /office-hours <아이디어>      → 제품 판단 (Go/No-Go/Pivot)
+2. /brainstorm <기능명>          → 설계 확정
+3. /code:schema (필요시)         → DB 모델 변경
+4. /code:design <설명>           → AI 주도 UI 설계
+5. /code:game 또는 /code:page    → 스캐폴딩
+6. /code:component + /code:story → 컴포넌트 + Storybook
+7. /code:api                     → API 라우트
+8. /code:test                    → 테스트
+9. /qa                           → QA 검증
+10. /validate --fix              → 정적 검증
+11. /commit → /release → /pr     → 배포
 ```
+
+> 상세: `docs/gstack-workflow.md`
 
 ### 디자이너 없는 환경 전략
 
@@ -390,4 +409,5 @@ Claude는 작업 중 발견한 프로젝트 지식을 `.claude/memory/`에 자�
 - `.claude/memory/` — Claude 자동 기록 지식 저장소
 - `.claude/commands/` — 프로젝트 커스텀 슬래시 명령어
 - `.claude/pr-rules.md` — PR 작성 규칙 (Why 중심, 템플릿 준수)
+- `docs/gstack-workflow.md` — gstack 워크플로우 가이드 (Think → Ship)
 - `.github/pull_request_template.md` — PR 본문 템플릿 (PR 생성 시 반드시 Read 도구로 읽고 양식 준수)
