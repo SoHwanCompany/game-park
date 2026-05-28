@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 
+import { clearSocialConsentCookie, getSocialConsentCookie } from '@/lib/auth-consent';
 import { prisma } from '@/lib/prisma';
 import { createCustomAdapter } from '@/lib/prisma-adapter';
 import { loginSchema } from '@/app/(auth)/_schemas/auth';
@@ -56,18 +57,59 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   callbacks: {
     ...authConfig.callbacks,
-    signIn: async ({ user }) => {
+    signIn: async ({ user, account }) => {
       if (!user.id) {
         return true;
       }
 
       const dbUser = await prisma.user.findUnique({
         where: { id: user.id },
-        select: { status: true },
+        select: {
+          status: true,
+          termsAgreedAt: true,
+          privacyAgreedAt: true,
+          marketingAgreedAt: true,
+        },
       });
 
       if (dbUser?.status === 'WITHDRAWN') {
+        await clearSocialConsentCookie();
+
         return false;
+      }
+
+      if (account?.provider === 'kakao') {
+        const consent = await getSocialConsentCookie();
+
+        if (consent) {
+          const agreedAt = new Date();
+          const updateData: {
+            termsAgreedAt?: Date;
+            privacyAgreedAt?: Date;
+            marketingAgreedAt?: Date;
+          } = {};
+
+          if (!dbUser?.termsAgreedAt) {
+            updateData.termsAgreedAt = agreedAt;
+          }
+
+          if (!dbUser?.privacyAgreedAt) {
+            updateData.privacyAgreedAt = agreedAt;
+          }
+
+          if (consent.marketingAgreed && !dbUser?.marketingAgreedAt) {
+            updateData.marketingAgreedAt = agreedAt;
+          }
+
+          if (Object.keys(updateData).length > 0) {
+            await prisma.user.update({
+              where: { id: user.id },
+              data: updateData,
+            });
+          }
+        }
+
+        await clearSocialConsentCookie();
       }
 
       return true;

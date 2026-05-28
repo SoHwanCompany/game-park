@@ -20,7 +20,8 @@
     "src/constants/feedback.ts",
     "src/types/index.ts",
     "src/lib/utils.ts",
-    "src/lib/auth.ts"
+    "src/lib/auth.ts",
+    "src/app/(auth)/_schemas/auth.ts"
   ],
   "ignoreDependencies": [
     "@tailwindcss/postcss",
