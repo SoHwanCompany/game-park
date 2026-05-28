@@ -110,7 +110,12 @@ export default async function AdminFeedbackPage({ searchParams }: AdminFeedbackP
                   </td>
                   <td className="px-4 py-2 text-right">
                     <Button asChild size="sm" variant="ghost">
-                      <Link href={`/admin/feedback/${feedback.id}`}>처리</Link>
+                      <Link
+                        href={`/admin/feedback/${feedback.id}`}
+                        aria-label={`${feedback.title} 상세 보기`}
+                      >
+                        상세 보기
+                      </Link>
                     </Button>
                   </td>
                 </tr>
