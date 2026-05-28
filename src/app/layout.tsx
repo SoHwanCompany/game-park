@@ -13,7 +13,6 @@ export const metadata: Metadata = {
   description:
     '브라우저에서 바로 즐기는 무료 웹 게임 플랫폼. 설치 없이 퍼즐, 아케이드, 전략 게임을 플레이하세요.',
   keywords: ['무료 웹 게임', '브라우저 게임', '온라인 게임', '캐주얼 게임', '게임파크'],
-  icons: { icon: '/favicon.svg' },
   openGraph: {
     type: 'website',
     locale: 'ko_KR',

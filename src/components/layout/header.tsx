@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 
 import { auth } from '@/lib/auth';
@@ -23,24 +24,14 @@ export const Header = async () => {
     <header className="border-b">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
         <Link href="/" className="flex items-center gap-2 text-xl font-bold">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 32 32"
-            className="size-6"
-            fill="none"
-            aria-hidden="true"
-          >
-            <rect x="4" y="10" width="24" height="14" rx="4" fill="currentColor" />
-            <circle cx="11" cy="17" r="2" className="fill-background" />
-            <circle cx="21" cy="17" r="2" className="fill-background" />
-            <rect x="9" y="15" width="1.5" height="4" rx="0.75" className="fill-background" />
-            <rect x="12.5" y="15" width="1.5" height="4" rx="0.75" className="fill-background" />
-            <rect x="8" y="16.25" width="6" height="1.5" rx="0.75" className="fill-background" />
-            <circle cx="19.5" cy="15.5" r="1" className="fill-background" />
-            <circle cx="22.5" cy="15.5" r="1" className="fill-background" />
-            <circle cx="21" cy="14" r="1" className="fill-background" />
-            <circle cx="21" cy="17" r="1" className="fill-background" />
-          </svg>
+          <Image
+            src="/images/logo.png"
+            alt="Game Park"
+            width={32}
+            height={32}
+            className="size-8 rounded-xl"
+            priority
+          />
           Game Park
         </Link>
 
