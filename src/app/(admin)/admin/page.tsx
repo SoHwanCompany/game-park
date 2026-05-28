@@ -1,18 +1,21 @@
 import {
   getAdminOverview,
+  getDailyTimeseries,
   getMostReportedTargets,
   getTopPlayedGames,
   getTrendingLikedGames,
 } from '@/lib/admin/stats';
 import { KpiCard } from '@/app/(admin)/_components/kpi-card';
+import { TimeseriesChart } from '@/app/(admin)/_components/timeseries-chart';
 import { TopListSection } from '@/app/(admin)/_components/top-list-section';
 
 export default async function AdminDashboardPage() {
-  const [overview, topPlayed, trending, reported] = await Promise.all([
+  const [overview, topPlayed, trending, reported, timeseries] = await Promise.all([
     getAdminOverview(),
     getTopPlayedGames(),
     getTrendingLikedGames(),
     getMostReportedTargets(),
+    getDailyTimeseries(),
   ]);
 
   return (
@@ -26,6 +29,11 @@ export default async function AdminDashboardPage() {
           <KpiCard label="대기 피드백" value={overview.pendingFeedbacks} />
           <KpiCard label="미처리 신고" value={overview.pendingReports} />
         </div>
+      </section>
+
+      <section className="bg-card rounded-lg border p-4">
+        <h3 className="mb-4 text-sm font-semibold">최근 30일 활동</h3>
+        <TimeseriesChart data={timeseries} />
       </section>
 
       <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

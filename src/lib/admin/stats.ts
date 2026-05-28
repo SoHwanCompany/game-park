@@ -107,3 +107,78 @@ export const getMostReportedTargets = async (limit = 10): Promise<ReportedTarget
     reportCount: row._count.targetId,
   }));
 };
+
+export interface TimeseriesPoint {
+  date: string;
+  signups: number;
+  plays: number;
+  likes: number;
+}
+
+const formatDateKey = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+};
+
+export const getDailyTimeseries = async (days = 30): Promise<TimeseriesPoint[]> => {
+  const start = new Date();
+
+  start.setHours(0, 0, 0, 0);
+  start.setDate(start.getDate() - days + 1);
+
+  const [signups, plays, likes] = await Promise.all([
+    prisma.user.findMany({
+      where: { createdAt: { gte: start } },
+      select: { createdAt: true },
+    }),
+    prisma.playEvent.findMany({
+      where: { playedAt: { gte: start } },
+      select: { playedAt: true },
+    }),
+    prisma.gameLike.findMany({
+      where: { createdAt: { gte: start } },
+      select: { createdAt: true },
+    }),
+  ]);
+
+  const buckets = new Map<string, TimeseriesPoint>();
+
+  for (let offset = 0; offset < days; offset += 1) {
+    const date = new Date(start);
+
+    date.setDate(start.getDate() + offset);
+
+    const key = formatDateKey(date);
+
+    buckets.set(key, { date: key, signups: 0, plays: 0, likes: 0 });
+  }
+
+  signups.forEach(({ createdAt }) => {
+    const bucket = buckets.get(formatDateKey(createdAt));
+
+    if (bucket) {
+      bucket.signups += 1;
+    }
+  });
+
+  plays.forEach(({ playedAt }) => {
+    const bucket = buckets.get(formatDateKey(playedAt));
+
+    if (bucket) {
+      bucket.plays += 1;
+    }
+  });
+
+  likes.forEach(({ createdAt }) => {
+    const bucket = buckets.get(formatDateKey(createdAt));
+
+    if (bucket) {
+      bucket.likes += 1;
+    }
+  });
+
+  return Array.from(buckets.values());
+};
