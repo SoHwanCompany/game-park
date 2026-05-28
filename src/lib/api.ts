@@ -10,6 +10,7 @@ const ERROR_CODES = {
   UNAUTHORIZED: '로그인이 필요합니다.',
   USER_NOT_FOUND: '사용자를 찾을 수 없습니다.',
   GAME_NOT_FOUND: '게임을 찾을 수 없습니다.',
+  GAME_CODE_EXISTS: '이미 사용 중인 게임 코드입니다.',
   FEEDBACK_NOT_FOUND: '게시글을 찾을 수 없습니다.',
   COMMENT_NOT_FOUND: '댓글을 찾을 수 없습니다.',
   FORBIDDEN: '권한이 없습니다.',

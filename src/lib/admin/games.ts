@@ -20,6 +20,37 @@ export interface AdminGameListItem {
   category: { id: string; name: string };
 }
 
+interface AdminGameDetail {
+  id: string;
+  code: string;
+  title: string;
+  description: string;
+  thumbnailUrl: string;
+  gameUrl: string;
+  status: GameStatus;
+  categoryId: string;
+  playCount: number;
+  likeCount: number;
+}
+
+export const getAdminGameById = async (id: string): Promise<AdminGameDetail | null> => {
+  return prisma.game.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      code: true,
+      title: true,
+      description: true,
+      thumbnailUrl: true,
+      gameUrl: true,
+      status: true,
+      categoryId: true,
+      playCount: true,
+      likeCount: true,
+    },
+  });
+};
+
 export const getAdminGames = async ({ status, q, limit = 50 }: GetAdminGamesParams = {}): Promise<
   AdminGameListItem[]
 > => {
