@@ -8,21 +8,42 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
-import { registerSchema, type RegisterFormValues } from '../_schemas/auth';
+import {
+  defaultAuthConsentValues,
+  registerSchema,
+  type AuthConsentValues,
+  type RegisterFormValues,
+} from '../_schemas/auth';
+import { AuthConsentSection } from './auth-consent-section';
 
 export const RegisterForm = () => {
   const { mutate, isPending, error } = useRegister();
 
   const {
+    watch,
+    setValue,
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
+    defaultValues: {
+      ...defaultAuthConsentValues,
+    },
   });
 
   const onSubmit = (data: RegisterFormValues): void => {
     mutate(data);
+  };
+
+  const consentValues = watch(['termsAgreed', 'privacyAgreed', 'marketingAgreed']);
+
+  const handleConsentChange = (field: keyof AuthConsentValues, checked: boolean): void => {
+    setValue(field, checked, {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true,
+    });
   };
 
   return (
@@ -41,7 +62,12 @@ export const RegisterForm = () => {
 
       <div className="space-y-2">
         <Label htmlFor="password">비밀번호</Label>
-        <Input id="password" type="password" placeholder="8자 이상" {...register('password')} />
+        <Input
+          id="password"
+          type="password"
+          placeholder="8~72자, 영문/숫자/특수문자 포함"
+          {...register('password')}
+        />
         {errors.password && <p className="text-destructive text-sm">{errors.password.message}</p>}
       </div>
 
@@ -57,6 +83,22 @@ export const RegisterForm = () => {
           <p className="text-destructive text-sm">{errors.passwordConfirm.message}</p>
         )}
       </div>
+
+      <AuthConsentSection
+        title="약관 동의"
+        description="회원가입을 위해 필수 약관 동의가 필요합니다."
+        values={{
+          termsAgreed: consentValues[0] ?? false,
+          privacyAgreed: consentValues[1] ?? false,
+          marketingAgreed: consentValues[2] ?? false,
+        }}
+        errors={{
+          termsAgreed: errors.termsAgreed?.message,
+          privacyAgreed: errors.privacyAgreed?.message,
+          marketingAgreed: errors.marketingAgreed?.message,
+        }}
+        onChange={handleConsentChange}
+      />
 
       {error && <p className="text-destructive text-center text-sm">{error.message}</p>}
 
