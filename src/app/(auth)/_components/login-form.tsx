@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { signIn } from 'next-auth/react';
@@ -8,39 +8,68 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 
+import { postSocialConsent } from '@/lib/api/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
-import { loginSchema, type LoginFormValues } from '../_schemas/auth';
+import {
+  defaultAuthConsentValues,
+  loginSchema,
+  socialConsentSchema,
+  type AuthConsentValues,
+  type LoginFormValues,
+  type SocialConsentValues,
+} from '../_schemas/auth';
+import { AuthConsentSection } from './auth-consent-section';
 
-const downgradeToSessionCookie = (): void => {
-  const cookieName = 'authjs.session-token';
-  const cookie = document.cookie.split('; ').find((c) => c.startsWith(`${cookieName}=`));
-
-  if (cookie) {
-    const value = cookie.split('=').slice(1).join('=');
-
-    document.cookie = `${cookieName}=${value}; path=/; SameSite=Lax`;
-  }
-};
+const LOGIN_EMAIL_STORAGE_KEY = 'saved-login-email';
 
 export const LoginForm = () => {
   const searchParams = useSearchParams();
   const [serverError, setServerError] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
+  const [rememberEmail, setRememberEmail] = useState(false);
+  const [socialError, setSocialError] = useState('');
   const registered = searchParams.get('registered') === 'true';
 
   const {
+    reset,
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
   });
+  const {
+    watch: watchSocialConsent,
+    setValue: setSocialConsentValue,
+    getValues: getSocialConsentValues,
+    trigger: validateSocialConsent,
+    formState: { errors: socialConsentErrors },
+  } = useForm<SocialConsentValues>({
+    resolver: zodResolver(socialConsentSchema),
+    defaultValues: {
+      ...defaultAuthConsentValues,
+    },
+  });
+
+  useEffect(() => {
+    const savedEmail = window.localStorage.getItem(LOGIN_EMAIL_STORAGE_KEY);
+
+    if (!savedEmail) {
+      return;
+    }
+
+    setRememberEmail(true);
+    reset({
+      email: savedEmail,
+      password: '',
+    });
+  }, [reset]);
 
   const onSubmit = async (data: LoginFormValues): Promise<void> => {
     setServerError('');
+    setSocialError('');
 
     try {
       const result = await signIn('credentials', {
@@ -55,8 +84,10 @@ export const LoginForm = () => {
         return;
       }
 
-      if (!rememberMe) {
-        downgradeToSessionCookie();
+      if (rememberEmail) {
+        window.localStorage.setItem(LOGIN_EMAIL_STORAGE_KEY, data.email);
+      } else {
+        window.localStorage.removeItem(LOGIN_EMAIL_STORAGE_KEY);
       }
 
       window.location.href = '/';
@@ -65,8 +96,37 @@ export const LoginForm = () => {
     }
   };
 
-  const handleSocialLogin = (provider: string): void => {
-    void signIn(provider, { callbackUrl: '/' });
+  const socialConsentValues = watchSocialConsent([
+    'termsAgreed',
+    'privacyAgreed',
+    'marketingAgreed',
+  ]);
+
+  const handleSocialConsentChange = (field: keyof AuthConsentValues, checked: boolean): void => {
+    setSocialConsentValue(field, checked, {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true,
+    });
+  };
+
+  const handleSocialLogin = async (provider: string): Promise<void> => {
+    setSocialError('');
+
+    const isValid = await validateSocialConsent();
+
+    if (!isValid) {
+      setSocialError('소셜 회원가입을 진행하려면 필수 약관에 동의해주세요.');
+
+      return;
+    }
+
+    try {
+      await postSocialConsent(getSocialConsentValues());
+      await signIn(provider, { callbackUrl: '/' });
+    } catch {
+      setSocialError('소셜 로그인 준비 중 오류가 발생했습니다.');
+    }
   };
 
   return (
@@ -93,10 +153,10 @@ export const LoginForm = () => {
         <label className="flex items-center gap-2">
           <input
             type="checkbox"
-            checked={rememberMe}
-            onChange={(e) => setRememberMe(e.target.checked)}
+            checked={rememberEmail}
+            onChange={(e) => setRememberEmail(e.target.checked)}
           />
-          <span className="text-muted-foreground text-sm">자동 로그인</span>
+          <span className="text-muted-foreground text-sm">이메일 저장</span>
         </label>
 
         {serverError.length > 0 && (
@@ -117,10 +177,32 @@ export const LoginForm = () => {
         </div>
       </div>
 
+      <AuthConsentSection
+        title="소셜 회원가입 동의"
+        description="카카오로 처음 시작할 때 필수 약관 동의가 필요합니다."
+        values={{
+          termsAgreed: socialConsentValues[0] ?? false,
+          privacyAgreed: socialConsentValues[1] ?? false,
+          marketingAgreed: socialConsentValues[2] ?? false,
+        }}
+        errors={{
+          termsAgreed: socialConsentErrors.termsAgreed?.message,
+          privacyAgreed: socialConsentErrors.privacyAgreed?.message,
+          marketingAgreed: socialConsentErrors.marketingAgreed?.message,
+        }}
+        onChange={handleSocialConsentChange}
+      />
+
+      {socialError.length > 0 && (
+        <p className="text-destructive text-center text-sm">{socialError}</p>
+      )}
+
       <Button
         type="button"
         className="w-full bg-[#FEE500] text-[#191919] hover:bg-[#FDD835]"
-        onClick={() => handleSocialLogin('kakao')}
+        onClick={() => {
+          void handleSocialLogin('kakao');
+        }}
       >
         <svg
           width="18"

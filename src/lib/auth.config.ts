@@ -6,7 +6,8 @@ export const authConfig = {
     Kakao({
       clientId: process.env.AUTH_KAKAO_ID,
       clientSecret: process.env.AUTH_KAKAO_SECRET,
-      authorization: 'https://kauth.kakao.com/oauth/authorize?scope=profile_nickname+profile_image',
+      authorization:
+        'https://kauth.kakao.com/oauth/authorize?scope=profile_nickname+profile_image+account_email',
       checks: ['state'],
     }),
   ],
