@@ -1,5 +1,6 @@
 import { PrismaNeon } from '@prisma/adapter-neon';
 import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 const connectionString = process.env.DATABASE_URL ?? '';
 const adapter = new PrismaNeon({ connectionString });
@@ -101,6 +102,30 @@ const main = async (): Promise<void> => {
   }
 
   console.warn(`Seeded ${games.length} games`);
+
+  const adminEmail = process.env.SEED_ADMIN_EMAIL;
+  const adminPassword = process.env.SEED_ADMIN_PASSWORD;
+  const adminNickname = process.env.SEED_ADMIN_NICKNAME ?? 'admin';
+
+  if (adminEmail && adminPassword) {
+    const hashedPassword = await bcrypt.hash(adminPassword, 10);
+
+    await prisma.user.upsert({
+      where: { email: adminEmail },
+      update: { role: 'ADMIN', status: 'ACTIVE' },
+      create: {
+        email: adminEmail,
+        password: hashedPassword,
+        nickname: adminNickname,
+        role: 'ADMIN',
+        status: 'ACTIVE',
+      },
+    });
+
+    console.warn(`Seeded ADMIN user: ${adminEmail}`);
+  } else {
+    console.warn('Skipped ADMIN seed (set SEED_ADMIN_EMAIL/SEED_ADMIN_PASSWORD to enable)');
+  }
 };
 
 main()
