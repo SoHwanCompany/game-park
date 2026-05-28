@@ -42,7 +42,7 @@ export const authConfig = {
       const isAdminPath = nextUrl.pathname.startsWith('/admin');
 
       if (isAdminPath) {
-        return auth?.user?.role === 'ADMIN';
+        return isLoggedIn;
       }
 
       const protectedPaths = ['/mypage'];
