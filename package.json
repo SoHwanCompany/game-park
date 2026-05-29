@@ -11,6 +11,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx,css,json}\"",
+    "sync:codex-config": "node scripts/sync-codex-config.mjs",
     "type-check": "tsc --noEmit",
     "knip": "knip",
     "validate": "pnpm type-check && pnpm lint && pnpm knip",
@@ -50,6 +51,7 @@
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-hook-form": "^7.71.2",
+    "recharts": "^3.8.1",
     "tailwind-merge": "^3.5.0",
     "zod": "^4.3.6"
   },

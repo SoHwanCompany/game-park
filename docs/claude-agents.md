@@ -15,12 +15,15 @@ Claude Code에서 사용할 수 있는 전문화된 서브에이전트와 브레
 
 ## 에이전트 목록
 
-| 에이전트        | 모델    | 역할                           | 사용 가능한 도구                    |
-| --------------- | ------- | ------------------------------ | ----------------------------------- |
-| `code-reviewer` | Sonnet  | 프로젝트 컨벤션 기반 코드 리뷰 | Read, Glob, Grep, Bash              |
-| `test-runner`   | Sonnet  | 테스트 실행 및 실패 분석       | Bash, Read, Glob, Grep              |
-| `doc-writer`    | Sonnet  | 기술 문서 작성                 | Read, Write, Edit, Glob, Grep, Bash |
-| `implementer`   | inherit | 태스크 단위 기능 구현          | 전체                                |
+| 에이전트          | 모델    | 역할                                   | 사용 가능한 도구                            |
+| ----------------- | ------- | -------------------------------------- | ------------------------------------------- |
+| `code-reviewer`   | Sonnet  | 프로젝트 컨벤션 기반 코드 리뷰         | Read, Glob, Grep, Bash                      |
+| `test-runner`     | Sonnet  | 테스트 실행 및 실패 분석               | Bash, Read, Glob, Grep                      |
+| `doc-writer`      | Sonnet  | 기술 문서 작성                         | Read, Write, Edit, Glob, Grep, Bash         |
+| `implementer`     | inherit | 태스크 단위 기능 구현                  | 전체                                        |
+| `product-advisor` | inherit | 제품 판단 (Go/No-Go/Pivot)             | Read, Glob, Grep, Bash, WebSearch, WebFetch |
+| `qa-engineer`     | inherit | 시나리오 기반 QA 검증                  | Read, Glob, Grep, Bash, WebFetch            |
+| `release-manager` | Sonnet  | 배포 전 체크리스트 검증 및 릴리즈 관리 | Read, Glob, Grep, Bash                      |
 
 ## 사용법
 
@@ -140,11 +143,20 @@ Vitest 테스트를 실행하고 실패 원인을 분석한다.
 │   ├── code-reviewer.md     # 코드 리뷰
 │   ├── test-runner.md       # 테스트 실행/분석
 │   ├── doc-writer.md        # 문서 작성
-│   └── implementer.md       # 기능 구현
+│   ├── implementer.md       # 기능 구현
+│   ├── ui-designer.md       # AI 주도 UI 설계/구현
+│   ├── game-integrator.md   # iframe 게임 통합
+│   ├── product-advisor.md   # 제품 판단 (gstack)
+│   ├── qa-engineer.md       # QA 검증 (gstack)
+│   └── release-manager.md   # 릴리즈 관리 (gstack)
 ├── commands/
-│   └── dev/
-│       ├── brainstorm.md    # 브레인스토밍 커맨드
-│       └── review.md        # 코드 리뷰 커맨드 (code-reviewer 연동)
+│   ├── dev/
+│   │   ├── brainstorm.md    # 브레인스토밍 커맨드
+│   │   ├── review.md        # 코드 리뷰 커맨드 (code-reviewer 연동)
+│   │   ├── office-hours.md  # 제품 판단 (product-advisor 연동)
+│   │   └── qa.md            # QA 검증 (qa-engineer 연동)
+│   └── git/
+│       └── release.md       # 릴리즈 (release-manager 연동)
 └── ...
 ```
 
