@@ -1,25 +1,40 @@
 import { type Metadata } from 'next';
+import Script from 'next/script';
 
+import { SITE_DESCRIPTION, SITE_KEYWORDS, SITE_TITLE, SITE_URL } from '@/lib/site';
+import { AnalyticsProvider } from '@/components/providers/analytics-provider';
 import { QueryProvider } from '@/components/providers/query-provider';
 
 import './globals.css';
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'https://game-park.vercel.app'),
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: 'Game Park - 무료 웹 게임 플랫폼',
+    default: SITE_TITLE,
     template: '%s | Game Park',
   },
-  description:
-    '브라우저에서 바로 즐기는 무료 웹 게임 플랫폼. 설치 없이 퍼즐, 아케이드, 전략 게임을 플레이하세요.',
-  keywords: ['무료 웹 게임', '브라우저 게임', '온라인 게임', '캐주얼 게임', '게임파크'],
+  description: SITE_DESCRIPTION,
+  keywords: [...SITE_KEYWORDS],
+  alternates: {
+    canonical: '/',
+  },
+  category: 'games',
+  applicationName: 'Game Park',
+  creator: 'Game Park',
+  publisher: 'Game Park',
+  manifest: '/manifest.webmanifest',
   openGraph: {
     type: 'website',
     locale: 'ko_KR',
     siteName: 'Game Park',
+    url: '/',
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
   },
   twitter: {
     card: 'summary_large_image',
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
   },
   robots: {
     index: true,
@@ -28,9 +43,22 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const adsenseClientId = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID;
+
   return (
     <html lang="ko">
+      <head>
+        {adsenseClientId ? (
+          <Script
+            async
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseClientId}`}
+            crossOrigin="anonymous"
+            strategy="afterInteractive"
+          />
+        ) : null}
+      </head>
       <body>
+        <AnalyticsProvider gaMeasurementId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
         <QueryProvider>{children}</QueryProvider>
       </body>
     </html>

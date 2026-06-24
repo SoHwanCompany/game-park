@@ -8,6 +8,7 @@ import { postPlay, postRanking } from '@/lib/api/game';
 import { generateRandomNickname } from '@/lib/random-nickname';
 import { cn } from '@/lib/utils';
 import { type PlatformToGameMessage } from '@/types/game';
+import { trackEvent } from '@/components/providers/analytics-provider';
 import { Button } from '@/components/ui/button';
 
 import {
@@ -136,6 +137,10 @@ export const GamePlayer = ({ gameUrl, gameTitle, gameId, userId, nickname }: Gam
 
           setGameState('playing');
           sendInit();
+          trackEvent('game_ready', {
+            game_id: gameId,
+            game_title: gameTitle,
+          });
           break;
         }
 
@@ -147,6 +152,10 @@ export const GamePlayer = ({ gameUrl, gameTitle, gameId, userId, nickname }: Gam
               hasCountedRef.current = true;
               sessionStorage.setItem(playedKey, '1');
               void postPlay(gameId);
+              trackEvent('game_play', {
+                game_id: gameId,
+                game_title: gameTitle,
+              });
             }
           }
 
@@ -154,6 +163,8 @@ export const GamePlayer = ({ gameUrl, gameTitle, gameId, userId, nickname }: Gam
         }
 
         case 'GAME_OVER': {
+          const { score, playtime } = message.payload;
+
           if (!hasCountedRef.current) {
             const playedKey = `played_${gameId}`;
 
@@ -161,12 +172,21 @@ export const GamePlayer = ({ gameUrl, gameTitle, gameId, userId, nickname }: Gam
               hasCountedRef.current = true;
               sessionStorage.setItem(playedKey, '1');
               void postPlay(gameId);
+              trackEvent('game_play', {
+                game_id: gameId,
+                game_title: gameTitle,
+              });
             }
           }
 
-          if (userId) {
-            const { score, playtime } = message.payload;
+          trackEvent('game_over', {
+            game_id: gameId,
+            game_title: gameTitle,
+            score,
+            playtime,
+          });
 
+          if (userId) {
             void postRanking(gameId, score, playtime);
           }
 
@@ -176,6 +196,11 @@ export const GamePlayer = ({ gameUrl, gameTitle, gameId, userId, nickname }: Gam
         case 'ERROR': {
           setGameState('error');
           setErrorInfo(message.payload);
+          trackEvent('game_error', {
+            game_id: gameId,
+            game_title: gameTitle,
+            error_code: message.payload.code,
+          });
           break;
         }
       }
@@ -186,7 +211,7 @@ export const GamePlayer = ({ gameUrl, gameTitle, gameId, userId, nickname }: Gam
     return () => {
       window.removeEventListener('message', handleMessage);
     };
-  }, [gameId, gameOrigin, sendInit, userId]);
+  }, [gameId, gameOrigin, gameTitle, sendInit, userId]);
 
   useEffect(() => {
     const handleVisibilityChange = (): void => {

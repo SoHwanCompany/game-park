@@ -4,13 +4,12 @@ import { notFound } from 'next/navigation';
 
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { SITE_URL } from '@/lib/site';
 import { DEFAULT_THUMBNAIL } from '@/constants/game';
 import { GamePlayer } from '@/components/game/game-player';
 
 import { LikeButton } from '../_components/like-button';
 import { UserRankingSection } from './_components/user-ranking-section';
-
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://game-park.vercel.app';
 
 const getGame = unstable_cache(
   async (id: string) => {
@@ -56,9 +55,13 @@ const generateMetadata = async ({ params }: GameDetailPageProps): Promise<Metada
   return {
     title: game.title,
     description,
+    alternates: {
+      canonical: `/games/${id}`,
+    },
     openGraph: {
       title: game.title,
       description,
+      url: `/games/${id}`,
       ...(images.length > 0 ? { images } : {}),
     },
   };
@@ -102,7 +105,7 @@ export default async function GameDetailPage({ params }: GameDetailPageProps) {
     gamePlatform: 'Web Browser',
     applicationCategory: 'Game',
     playMode: 'SinglePlayer',
-    url: `${BASE_URL}/games/${game.id}`,
+    url: `${SITE_URL}/games/${game.id}`,
     ...(game.thumbnailUrl && game.thumbnailUrl !== DEFAULT_THUMBNAIL
       ? { image: game.thumbnailUrl }
       : {}),
