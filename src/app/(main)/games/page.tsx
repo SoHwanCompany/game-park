@@ -6,12 +6,11 @@ import { unstable_cache } from 'next/cache';
 
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { SITE_URL } from '@/lib/site';
 
 import { CategoryFilter } from '../_components/category-filter';
 import { GameList } from './_components/game-list';
 import { SortSelect } from './_components/sort-select';
-
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://game-park.vercel.app';
 
 const getCategories = unstable_cache(
   async () => {
@@ -75,10 +74,14 @@ const generateMetadata = async ({ searchParams }: GamesPageProps): Promise<Metad
     title,
     description:
       'Game Park에서 다양한 웹 게임을 무료로 즐기세요. 퍼즐, 액션, 전략 등 카테고리별 게임을 브라우저에서 바로 플레이.',
+    alternates: {
+      canonical: category && category !== 'all' ? `/games?category=${category}` : '/games',
+    },
     openGraph: {
       title,
       description:
         'Game Park에서 다양한 웹 게임을 무료로 즐기세요. 퍼즐, 액션, 전략 등 카테고리별 게임을 브라우저에서 바로 플레이.',
+      url: category && category !== 'all' ? `/games?category=${category}` : '/games',
     },
   };
 };
@@ -123,7 +126,7 @@ export default async function GamesPage({ searchParams }: GamesPageProps) {
       '@type': 'ListItem',
       position: index + 1,
       name: game.title,
-      url: `${BASE_URL}/games/${game.id}`,
+      url: `${SITE_URL}/games/${game.id}`,
     })),
   };
 
