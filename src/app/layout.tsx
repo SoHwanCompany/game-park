@@ -1,5 +1,4 @@
 import { type Metadata } from 'next';
-import Script from 'next/script';
 
 import { SITE_DESCRIPTION, SITE_KEYWORDS, SITE_TITLE, SITE_URL } from '@/lib/site';
 import { AnalyticsProvider } from '@/components/providers/analytics-provider';
@@ -49,11 +48,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="ko">
       <head>
         {adsenseClientId ? (
-          <Script
+          <script
             async
             src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseClientId}`}
             crossOrigin="anonymous"
-            strategy="afterInteractive"
           />
         ) : null}
       </head>
