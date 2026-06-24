@@ -33,6 +33,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'daily',
       priority: 0.7,
     },
+    {
+      url: `${SITE_URL}/privacy`,
+      lastModified: latestGameUpdatedAt,
+      changeFrequency: 'monthly',
+      priority: 0.4,
+    },
   ];
 
   const gameEntries: MetadataRoute.Sitemap = publishedGames.map((game) => ({
