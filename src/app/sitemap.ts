@@ -1,27 +1,26 @@
 import { type MetadataRoute } from 'next';
 
 import { prisma } from '@/lib/prisma';
+import { SITE_URL } from '@/lib/site';
 
 export const dynamic = 'force-dynamic';
-
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://game-park.vercel.app';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticEntries: MetadataRoute.Sitemap = [
     {
-      url: BASE_URL,
+      url: SITE_URL,
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 1.0,
     },
     {
-      url: `${BASE_URL}/games`,
+      url: `${SITE_URL}/games`,
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.9,
     },
     {
-      url: `${BASE_URL}/rankings`,
+      url: `${SITE_URL}/rankings`,
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.7,
@@ -34,7 +33,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   });
 
   const gameEntries: MetadataRoute.Sitemap = publishedGames.map((game) => ({
-    url: `${BASE_URL}/games/${game.id}`,
+    url: `${SITE_URL}/games/${game.id}`,
     lastModified: game.updatedAt,
     changeFrequency: 'weekly',
     priority: 0.8,
@@ -49,7 +48,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   });
 
   const categoryEntries: MetadataRoute.Sitemap = categoriesWithGames.map((category) => ({
-    url: `${BASE_URL}/games?category=${category.code}`,
+    url: `${SITE_URL}/games?category=${category.code}`,
     lastModified: new Date(),
     changeFrequency: 'weekly',
     priority: 0.6,
