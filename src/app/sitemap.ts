@@ -6,31 +6,34 @@ import { SITE_URL } from '@/lib/site';
 export const dynamic = 'force-dynamic';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const publishedGames = await prisma.game.findMany({
+    where: { status: 'PUBLISHED' },
+    select: { id: true, updatedAt: true },
+    orderBy: { updatedAt: 'desc' },
+  });
+
+  const latestGameUpdatedAt = publishedGames[0]?.updatedAt ?? new Date();
+
   const staticEntries: MetadataRoute.Sitemap = [
     {
       url: SITE_URL,
-      lastModified: new Date(),
+      lastModified: latestGameUpdatedAt,
       changeFrequency: 'weekly',
       priority: 1.0,
     },
     {
       url: `${SITE_URL}/games`,
-      lastModified: new Date(),
+      lastModified: latestGameUpdatedAt,
       changeFrequency: 'daily',
       priority: 0.9,
     },
     {
       url: `${SITE_URL}/rankings`,
-      lastModified: new Date(),
+      lastModified: latestGameUpdatedAt,
       changeFrequency: 'daily',
       priority: 0.7,
     },
   ];
-
-  const publishedGames = await prisma.game.findMany({
-    where: { status: 'PUBLISHED' },
-    select: { id: true, updatedAt: true },
-  });
 
   const gameEntries: MetadataRoute.Sitemap = publishedGames.map((game) => ({
     url: `${SITE_URL}/games/${game.id}`,
@@ -44,12 +47,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       isActive: true,
       games: { some: { status: 'PUBLISHED' } },
     },
-    select: { code: true },
+    select: { code: true, updatedAt: true },
   });
 
   const categoryEntries: MetadataRoute.Sitemap = categoriesWithGames.map((category) => ({
     url: `${SITE_URL}/games?category=${category.code}`,
-    lastModified: new Date(),
+    lastModified: category.updatedAt,
     changeFrequency: 'weekly',
     priority: 0.6,
   }));

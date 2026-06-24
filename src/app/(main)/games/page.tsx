@@ -6,7 +6,8 @@ import { unstable_cache } from 'next/cache';
 
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { SITE_URL } from '@/lib/site';
+import { serializeJsonLd } from '@/lib/seo';
+import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '@/lib/site';
 
 import { CategoryFilter } from '../_components/category-filter';
 import { GameList } from './_components/game-list';
@@ -57,7 +58,7 @@ interface GamesPageProps {
 const generateMetadata = async ({ searchParams }: GamesPageProps): Promise<Metadata> => {
   const { category } = await searchParams;
 
-  let title = '무료 웹 게임 모음';
+  let title = '직장인 쉬는 시간 미니게임 모음';
 
   if (category && category !== 'all') {
     const found = await prisma.category.findFirst({
@@ -66,21 +67,19 @@ const generateMetadata = async ({ searchParams }: GamesPageProps): Promise<Metad
     });
 
     if (found) {
-      title = `${found.name} 게임 모음`;
+      title = `${found.name} 미니게임 모음`;
     }
   }
 
   return {
     title,
-    description:
-      'Game Park에서 다양한 웹 게임을 무료로 즐기세요. 퍼즐, 액션, 전략 등 카테고리별 게임을 브라우저에서 바로 플레이.',
+    description: SITE_DESCRIPTION,
     alternates: {
       canonical: category && category !== 'all' ? `/games?category=${category}` : '/games',
     },
     openGraph: {
       title,
-      description:
-        'Game Park에서 다양한 웹 게임을 무료로 즐기세요. 퍼즐, 액션, 전략 등 카테고리별 게임을 브라우저에서 바로 플레이.',
+      description: SITE_DESCRIPTION,
       url: category && category !== 'all' ? `/games?category=${category}` : '/games',
     },
   };
@@ -121,24 +120,44 @@ export default async function GamesPage({ searchParams }: GamesPageProps) {
 
   const jsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'ItemList',
-    itemListElement: serializedGames.map((game, index) => ({
-      '@type': 'ListItem',
-      position: index + 1,
-      name: game.title,
-      url: `${SITE_URL}/games/${game.id}`,
-    })),
+    '@graph': [
+      {
+        '@type': 'CollectionPage',
+        name: '직장인 쉬는 시간 미니게임 모음',
+        description: SITE_DESCRIPTION,
+        url: `${SITE_URL}/games`,
+        isPartOf: {
+          '@type': 'WebSite',
+          name: SITE_NAME,
+          url: SITE_URL,
+        },
+      },
+      {
+        '@type': 'ItemList',
+        name: 'Game Park 게임 목록',
+        numberOfItems: serializedGames.length,
+        itemListElement: serializedGames.map((game, index) => ({
+          '@type': 'ListItem',
+          position: index + 1,
+          name: game.title,
+          description: game.description,
+          url: `${SITE_URL}/games/${game.id}`,
+        })),
+      },
+    ],
   };
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-12">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
       />
       <div className="mb-8 space-y-2">
-        <h1 className="text-3xl font-bold">게임 목록</h1>
-        <p className="text-muted-foreground">다양한 웹 게임을 즐겨보세요.</p>
+        <h1 className="text-3xl font-bold">직장인 쉬는 시간 미니게임 모음</h1>
+        <p className="text-muted-foreground">
+          심심할 때 설치 없이 바로 즐기는 짧고 가벼운 브라우저 게임을 골라보세요.
+        </p>
       </div>
 
       <div className="mb-6 flex items-center justify-between gap-4">

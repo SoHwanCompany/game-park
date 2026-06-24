@@ -4,7 +4,8 @@ import { notFound } from 'next/navigation';
 
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { SITE_URL } from '@/lib/site';
+import { serializeJsonLd } from '@/lib/seo';
+import { SITE_NAME, SITE_URL } from '@/lib/site';
 import { DEFAULT_THUMBNAIL } from '@/constants/game';
 import { GamePlayer } from '@/components/game/game-player';
 
@@ -48,18 +49,21 @@ const generateMetadata = async ({ params }: GameDetailPageProps): Promise<Metada
     };
   }
 
-  const description = truncateDescription(game.description, 155);
+  const description = truncateDescription(
+    `${game.description} Game Park에서 설치 없이 바로 플레이하는 무료 브라우저 미니게임입니다.`,
+    155,
+  );
   const images =
     game.thumbnailUrl && game.thumbnailUrl !== DEFAULT_THUMBNAIL ? [game.thumbnailUrl] : [];
 
   return {
-    title: game.title,
+    title: `${game.title} - 설치 없는 브라우저 게임`,
     description,
     alternates: {
       canonical: `/games/${id}`,
     },
     openGraph: {
-      title: game.title,
+      title: `${game.title} - 설치 없는 브라우저 게임`,
       description,
       url: `/games/${id}`,
       ...(images.length > 0 ? { images } : {}),
@@ -98,35 +102,77 @@ export default async function GameDetailPage({ params }: GameDetailPageProps) {
 
   const jsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'VideoGame',
-    name: game.title,
-    description: game.description,
-    genre: game.category.name,
-    gamePlatform: 'Web Browser',
-    applicationCategory: 'Game',
-    playMode: 'SinglePlayer',
-    url: `${SITE_URL}/games/${game.id}`,
-    ...(game.thumbnailUrl && game.thumbnailUrl !== DEFAULT_THUMBNAIL
-      ? { image: game.thumbnailUrl }
-      : {}),
-    ...(game.likeCount > 0
-      ? {
-          aggregateRating: {
-            '@type': 'AggregateRating',
-            ratingValue: Math.min(5, Math.max(1, Math.round((game.likeCount / 10) * 4) + 1)),
-            bestRating: 5,
-            worstRating: 1,
-            ratingCount: game.likeCount,
+    '@graph': [
+      {
+        '@type': 'VideoGame',
+        name: game.title,
+        description: game.description,
+        genre: game.category.name,
+        gamePlatform: 'Web Browser',
+        operatingSystem: 'Any',
+        applicationCategory: 'Game',
+        playMode: 'SinglePlayer',
+        isAccessibleForFree: true,
+        inLanguage: 'ko-KR',
+        url: `${SITE_URL}/games/${game.id}`,
+        publisher: {
+          '@type': 'Organization',
+          name: SITE_NAME,
+          url: SITE_URL,
+        },
+        offers: {
+          '@type': 'Offer',
+          price: '0',
+          priceCurrency: 'KRW',
+          availability: 'https://schema.org/InStock',
+        },
+        interactionStatistic: [
+          {
+            '@type': 'InteractionCounter',
+            interactionType: 'https://schema.org/PlayAction',
+            userInteractionCount: game.playCount,
           },
-        }
-      : {}),
+          {
+            '@type': 'InteractionCounter',
+            interactionType: 'https://schema.org/LikeAction',
+            userInteractionCount: game.likeCount,
+          },
+        ],
+        ...(game.thumbnailUrl && game.thumbnailUrl !== DEFAULT_THUMBNAIL
+          ? { image: game.thumbnailUrl }
+          : {}),
+      },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: '홈',
+            item: SITE_URL,
+          },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: '게임',
+            item: `${SITE_URL}/games`,
+          },
+          {
+            '@type': 'ListItem',
+            position: 3,
+            name: game.title,
+            item: `${SITE_URL}/games/${game.id}`,
+          },
+        ],
+      },
+    ],
   };
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
       />
       <GamePlayer
         gameUrl={game.gameUrl}
