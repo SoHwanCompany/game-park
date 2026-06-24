@@ -5,11 +5,15 @@ import {
   getTopPlayedGames,
   getTrendingLikedGames,
 } from '@/lib/admin/stats';
+import { getOperationsStatus } from '@/lib/operations';
 import { KpiCard } from '@/app/(admin)/_components/kpi-card';
+import { OperationsStatusSection } from '@/app/(admin)/_components/operations-status-section';
 import { TimeseriesChart } from '@/app/(admin)/_components/timeseries-chart';
 import { TopListSection } from '@/app/(admin)/_components/top-list-section';
 
 export default async function AdminDashboardPage() {
+  const operations = getOperationsStatus();
+
   const [overview, topPlayed, trending, reported, timeseries] = await Promise.all([
     getAdminOverview(),
     getTopPlayedGames(),
@@ -22,14 +26,18 @@ export default async function AdminDashboardPage() {
     <div className="space-y-8">
       <section>
         <h2 className="mb-4 text-xl font-bold">대시보드</h2>
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-7">
           <KpiCard label="전체 회원" value={overview.totalUsers} />
           <KpiCard label="오늘 신규 가입" value={overview.newUsersToday} />
+          <KpiCard label="오늘 플레이" value={overview.playsToday} />
+          <KpiCard label="오늘 활성 회원" value={overview.activePlayersToday} />
           <KpiCard label="오늘 신규 좋아요" value={overview.newLikesToday} />
           <KpiCard label="대기 피드백" value={overview.pendingFeedbacks} />
           <KpiCard label="미처리 신고" value={overview.pendingReports} />
         </div>
       </section>
+
+      <OperationsStatusSection tools={operations.tools} />
 
       <section className="bg-card rounded-lg border p-4">
         <h3 className="mb-4 text-sm font-semibold">최근 30일 활동</h3>

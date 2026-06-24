@@ -5,6 +5,8 @@ import { prisma } from '@/lib/prisma';
 export interface AdminOverview {
   totalUsers: number;
   newUsersToday: number;
+  playsToday: number;
+  activePlayersToday: number;
   newLikesToday: number;
   pendingFeedbacks: number;
   pendingReports: number;
@@ -21,16 +23,37 @@ const getStartOfToday = (): Date => {
 export const getAdminOverview = async (): Promise<AdminOverview> => {
   const startOfToday = getStartOfToday();
 
-  const [totalUsers, newUsersToday, newLikesToday, pendingFeedbacks, pendingReports] =
-    await Promise.all([
-      prisma.user.count(),
-      prisma.user.count({ where: { createdAt: { gte: startOfToday } } }),
-      prisma.gameLike.count({ where: { createdAt: { gte: startOfToday } } }),
-      prisma.feedback.count({ where: { status: 'PENDING' } }),
-      prisma.report.count({ where: { status: 'PENDING' } }),
-    ]);
+  const [
+    totalUsers,
+    newUsersToday,
+    playsToday,
+    activePlayerRows,
+    newLikesToday,
+    pendingFeedbacks,
+    pendingReports,
+  ] = await Promise.all([
+    prisma.user.count(),
+    prisma.user.count({ where: { createdAt: { gte: startOfToday } } }),
+    prisma.playEvent.count({ where: { playedAt: { gte: startOfToday } } }),
+    prisma.playEvent.findMany({
+      where: { playedAt: { gte: startOfToday }, userId: { not: null } },
+      distinct: ['userId'],
+      select: { userId: true },
+    }),
+    prisma.gameLike.count({ where: { createdAt: { gte: startOfToday } } }),
+    prisma.feedback.count({ where: { status: 'PENDING' } }),
+    prisma.report.count({ where: { status: 'PENDING' } }),
+  ]);
 
-  return { totalUsers, newUsersToday, newLikesToday, pendingFeedbacks, pendingReports };
+  return {
+    totalUsers,
+    newUsersToday,
+    playsToday,
+    activePlayersToday: activePlayerRows.length,
+    newLikesToday,
+    pendingFeedbacks,
+    pendingReports,
+  };
 };
 
 interface TopPlayedGame {
