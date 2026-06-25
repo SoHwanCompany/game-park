@@ -8,6 +8,7 @@ import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { serializeJsonLd } from '@/lib/seo';
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '@/lib/site';
+import { AdSlot } from '@/components/monetization/ad-slot';
 
 import { CategoryFilter } from '../_components/category-filter';
 import { GameList } from './_components/game-list';
@@ -168,6 +169,8 @@ export default async function GamesPage({ searchParams }: GamesPageProps) {
           <SortSelect currentSort={sort} />
         </Suspense>
       </div>
+
+      <AdSlot placement="gameList" className="mb-6" />
 
       <GameList games={serializedGames} isLoggedIn={Boolean(session?.user)} />
     </div>

@@ -7,6 +7,7 @@ import { prisma } from '@/lib/prisma';
 import { SITE_NAME } from '@/lib/site';
 import { type GameRankingSortType } from '@/types/ranking';
 import { GAME_RANKING_LIMIT } from '@/constants/ranking';
+import { AdSlot } from '@/components/monetization/ad-slot';
 
 import { CategoryFilter } from '../_components/category-filter';
 import { GameRankingList } from './_components/game-ranking-list';
@@ -99,6 +100,8 @@ export default async function RankingsPage({ searchParams }: RankingsPageProps) 
       </div>
 
       <GameRankingList games={rankedGames} sortType={sortType} />
+
+      <AdSlot placement="ranking" />
     </div>
   );
 }

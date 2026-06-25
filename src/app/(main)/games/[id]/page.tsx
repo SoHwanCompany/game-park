@@ -8,6 +8,7 @@ import { serializeJsonLd } from '@/lib/seo';
 import { SITE_NAME, SITE_URL } from '@/lib/site';
 import { DEFAULT_THUMBNAIL } from '@/constants/game';
 import { GamePlayer } from '@/components/game/game-player';
+import { AdSlot } from '@/components/monetization/ad-slot';
 
 import { LikeButton } from '../_components/like-button';
 import { UserRankingSection } from './_components/user-ranking-section';
@@ -203,6 +204,8 @@ export default async function GameDetailPage({ params }: GameDetailPageProps) {
           />
         </div>
       </div>
+
+      <AdSlot placement="gameDetail" />
 
       <UserRankingSection gameId={game.id} />
     </div>
