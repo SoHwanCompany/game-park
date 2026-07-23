@@ -4,6 +4,7 @@ import { type Metadata } from 'next';
 import { unstable_cache } from 'next/cache';
 
 import { prisma } from '@/lib/prisma';
+import { SITE_NAME } from '@/lib/site';
 import { type GameRankingSortType } from '@/types/ranking';
 import { GAME_RANKING_LIMIT } from '@/constants/ranking';
 
@@ -12,9 +13,18 @@ import { GameRankingList } from './_components/game-ranking-list';
 import { RankingSortToggle } from './_components/ranking-sort-toggle';
 
 export const metadata: Metadata = {
-  title: '게임 랭킹',
+  title: '직장인 쉬는 시간 인기 게임 랭킹',
   description:
-    'Game Park 인기 게임 랭킹을 확인하세요. 최고 점수에 도전하고 랭킹 상위에 올라보세요!',
+    'Game Park에서 직장인 쉬는 시간에 많이 플레이한 인기 브라우저 미니게임 랭킹을 확인하세요.',
+  alternates: {
+    canonical: '/rankings',
+  },
+  openGraph: {
+    title: `직장인 쉬는 시간 인기 게임 랭킹 | ${SITE_NAME}`,
+    description:
+      'Game Park에서 직장인 쉬는 시간에 많이 플레이한 인기 브라우저 미니게임 랭킹을 확인하세요.',
+    url: '/rankings',
+  },
 };
 
 const getCategories = unstable_cache(
@@ -72,8 +82,10 @@ export default async function RankingsPage({ searchParams }: RankingsPageProps) 
   return (
     <div className="mx-auto max-w-7xl px-4 py-12">
       <div className="mb-8 space-y-2">
-        <h1 className="text-3xl font-bold">게임 랭킹</h1>
-        <p className="text-muted-foreground">인기 게임 TOP 20을 확인해보세요.</p>
+        <h1 className="text-3xl font-bold">직장인 쉬는 시간 인기 게임 랭킹</h1>
+        <p className="text-muted-foreground">
+          점심시간과 짧은 휴식 시간에 많이 플레이한 인기 게임 TOP 20을 확인해보세요.
+        </p>
       </div>
 
       {/* useSearchParams()의 SSR 경계 처리를 위해 Suspense 래핑 */}

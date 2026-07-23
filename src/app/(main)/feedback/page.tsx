@@ -6,6 +6,7 @@ import Link from 'next/link';
 
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { SITE_NAME } from '@/lib/site';
 import { FEEDBACK_PAGE_SIZE } from '@/constants/feedback';
 import { Button } from '@/components/ui/button';
 
@@ -17,6 +18,15 @@ export const metadata: Metadata = {
   title: '의견 게시판',
   description:
     'Game Park에 대한 의견을 남겨주세요. 버그 신고, 기능 제안, 게임 요청 등을 할 수 있습니다.',
+  alternates: {
+    canonical: '/feedback',
+  },
+  openGraph: {
+    title: `의견 게시판 | ${SITE_NAME}`,
+    description:
+      'Game Park에 대한 의견을 남겨주세요. 버그 신고, 기능 제안, 게임 요청 등을 할 수 있습니다.',
+    url: '/feedback',
+  },
 };
 
 interface FeedbackPageProps {
