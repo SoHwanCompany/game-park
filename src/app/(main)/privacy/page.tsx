@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 import { SITE_NAME, SITE_URL } from '@/lib/site';
 
-const PRIVACY_EFFECTIVE_DATE = '2026년 6월 24일';
+const PRIVACY_EFFECTIVE_DATE = '2026년 7월 23일';
 
 const collectedItems = [
   {
@@ -268,8 +268,8 @@ export default function PrivacyPage() {
         <p className="text-muted-foreground leading-7">
           사용자는 본인의 개인정보 열람, 정정, 삭제, 처리 정지, 동의 철회를 요청할 수 있습니다. 계정
           정보는 마이페이지에서 일부 수정할 수 있으며, 추가 요청은{' '}
-          <Link href="/feedback" className="text-foreground underline underline-offset-4">
-            의견 게시판
+          <Link href="/contact" className="text-foreground underline underline-offset-4">
+            문의 페이지
           </Link>
           을 통해 접수할 수 있습니다.
         </p>
@@ -281,8 +281,8 @@ export default function PrivacyPage() {
           <p>
             개인정보 보호 담당부서는 Game Park 운영팀입니다. 개인정보 열람, 정정, 삭제, 처리 정지,
             동의 철회, 광고 동의 관련 문의는{' '}
-            <Link href="/feedback" className="text-foreground underline underline-offset-4">
-              의견 게시판
+            <Link href="/contact" className="text-foreground underline underline-offset-4">
+              문의 페이지
             </Link>
             을 통해 접수할 수 있습니다. 전용 이메일 등 추가 연락처가 확정되면 본 방침에 반영합니다.
           </p>

@@ -1,6 +1,9 @@
+import { getGameGuideByCode } from '@/content/game-guides';
 import { type Metadata } from 'next';
 import { unstable_cache } from 'next/cache';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import Script from 'next/script';
 
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
@@ -9,6 +12,7 @@ import { SITE_NAME, SITE_URL } from '@/lib/site';
 import { DEFAULT_THUMBNAIL } from '@/constants/game';
 import { GamePlayer } from '@/components/game/game-player';
 import { AdSlot } from '@/components/monetization/ad-slot';
+import { Button } from '@/components/ui/button';
 
 import { LikeButton } from '../_components/like-button';
 import { UserRankingSection } from './_components/user-ranking-section';
@@ -41,7 +45,7 @@ const generateMetadata = async ({ params }: GameDetailPageProps): Promise<Metada
 
   const game = await prisma.game.findFirst({
     where: { id, status: 'PUBLISHED' },
-    select: { title: true, description: true, thumbnailUrl: true },
+    select: { code: true, title: true, description: true, thumbnailUrl: true },
   });
 
   if (!game) {
@@ -50,10 +54,8 @@ const generateMetadata = async ({ params }: GameDetailPageProps): Promise<Metada
     };
   }
 
-  const description = truncateDescription(
-    `${game.description} Game Park에서 설치 없이 바로 플레이하는 무료 브라우저 미니게임입니다.`,
-    155,
-  );
+  const guide = getGameGuideByCode(game.code);
+  const description = truncateDescription(guide?.summary ?? game.description, 155);
   const images =
     game.thumbnailUrl && game.thumbnailUrl !== DEFAULT_THUMBNAIL ? [game.thumbnailUrl] : [];
 
@@ -77,6 +79,7 @@ export { generateMetadata };
 export default async function GameDetailPage({ params }: GameDetailPageProps) {
   const { id } = await params;
   const session = await auth();
+  const adsenseClientId = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID;
 
   const game = await getGame(id);
 
@@ -84,6 +87,7 @@ export default async function GameDetailPage({ params }: GameDetailPageProps) {
     notFound();
   }
 
+  const guide = getGameGuideByCode(game.code);
   const isLiked = session?.user?.id
     ? (await prisma.gameLike.count({ where: { userId: session.user.id, gameId: game.id } })) > 0
     : false;
@@ -142,6 +146,7 @@ export default async function GameDetailPage({ params }: GameDetailPageProps) {
         ...(game.thumbnailUrl && game.thumbnailUrl !== DEFAULT_THUMBNAIL
           ? { image: game.thumbnailUrl }
           : {}),
+        ...(guide ? { subjectOf: `${SITE_URL}/guides/${guide.slug}` } : {}),
       },
       {
         '@type': 'BreadcrumbList',
@@ -171,6 +176,14 @@ export default async function GameDetailPage({ params }: GameDetailPageProps) {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
+      {adsenseClientId ? (
+        <Script
+          async
+          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseClientId}`}
+          crossOrigin="anonymous"
+          strategy="afterInteractive"
+        />
+      ) : null}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
@@ -204,6 +217,46 @@ export default async function GameDetailPage({ params }: GameDetailPageProps) {
           />
         </div>
       </div>
+
+      {guide ? (
+        <article className="mt-10 border-t pt-10">
+          <div className="max-w-3xl">
+            <p className="text-muted-foreground text-sm font-medium">Game Park 편집 가이드</p>
+            <h2 className="mt-2 text-2xl font-bold">{guide.title}</h2>
+            <p className="text-muted-foreground mt-3 leading-7">{guide.description}</p>
+          </div>
+
+          <section className="mt-8">
+            <h3 className="text-xl font-semibold">플레이 전에 기억할 핵심</h3>
+            <ol className="mt-4 grid gap-3 md:grid-cols-2">
+              {guide.keyPoints.map((point, index) => (
+                <li key={point} className="flex gap-3 rounded-lg border p-4 leading-7">
+                  <span className="bg-primary text-primary-foreground flex size-7 shrink-0 items-center justify-center rounded-full text-sm font-semibold">
+                    {index + 1}
+                  </span>
+                  <span>{point}</span>
+                </li>
+              ))}
+            </ol>
+          </section>
+
+          <section className="mt-8">
+            <h3 className="text-xl font-semibold">초보자 실전 팁</h3>
+            <div className="mt-4 grid gap-4 md:grid-cols-3">
+              {guide.tips.slice(0, 3).map((tip) => (
+                <div key={tip.title} className="rounded-lg border p-5">
+                  <h4 className="font-semibold">{tip.title}</h4>
+                  <p className="text-muted-foreground mt-2 text-sm leading-6">{tip.description}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <Button className="mt-6" variant="outline" asChild>
+            <Link href={`/guides/${guide.slug}`}>전체 가이드와 자주 묻는 질문 보기</Link>
+          </Button>
+        </article>
+      ) : null}
 
       <AdSlot placement="gameDetail" />
 
