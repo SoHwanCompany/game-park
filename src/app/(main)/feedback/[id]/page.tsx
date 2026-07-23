@@ -22,6 +22,7 @@ const generateMetadata = async ({ params }: FeedbackDetailPageProps): Promise<Me
 
   return {
     title: feedback?.title ?? '의견 상세',
+    robots: { index: false, follow: true },
   };
 };
 

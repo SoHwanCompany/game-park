@@ -1,21 +1,30 @@
+import { GAME_GUIDES } from '@/content/game-guides';
 import { type Metadata } from 'next';
 import { unstable_cache } from 'next/cache';
 import Image from 'next/image';
 import Link from 'next/link';
 
 import { prisma } from '@/lib/prisma';
-import { SITE_URL } from '@/lib/site';
+import { serializeJsonLd } from '@/lib/seo';
+import {
+  SEO_FAQS,
+  SITE_DESCRIPTION,
+  SITE_HERO_DESCRIPTION,
+  SITE_HERO_TITLE,
+  SITE_NAME,
+  SITE_TAGLINE,
+  SITE_TITLE,
+  SITE_URL,
+} from '@/lib/site';
 import { DEFAULT_THUMBNAIL } from '@/constants/game';
 import { Button } from '@/components/ui/button';
 
 export const metadata: Metadata = {
-  title: { absolute: 'Game Park - 브라우저에서 바로 즐기는 무료 웹 게임' },
-  description:
-    '다양한 웹 게임을 브라우저에서 바로 플레이하세요. 퍼즐, 아케이드, 전략 게임까지. 랭킹에 도전하고 레벨을 올려보세요!',
+  title: { absolute: SITE_TITLE },
+  description: SITE_DESCRIPTION,
   openGraph: {
-    title: 'Game Park - 브라우저에서 바로 즐기는 무료 웹 게임',
-    description:
-      '다양한 웹 게임을 브라우저에서 바로 플레이하세요. 퍼즐, 아케이드, 전략 게임까지. 랭킹에 도전하고 레벨을 올려보세요!',
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
     url: '/',
   },
   alternates: {
@@ -41,28 +50,102 @@ export default async function HomePage() {
 
   const jsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'WebSite',
-    name: 'Game Park',
-    url: SITE_URL,
-    description:
-      '다양한 웹 게임을 브라우저에서 바로 플레이하세요. 퍼즐, 아케이드, 전략 게임까지. 랭킹에 도전하고 레벨을 올려보세요!',
+    '@graph': [
+      {
+        '@type': 'WebSite',
+        name: SITE_NAME,
+        alternateName: ['게임파크', SITE_TAGLINE],
+        url: SITE_URL,
+        description: SITE_DESCRIPTION,
+        inLanguage: 'ko-KR',
+      },
+      {
+        '@type': 'Organization',
+        name: SITE_NAME,
+        url: SITE_URL,
+        logo: `${SITE_URL}/images/logo.png`,
+      },
+      {
+        '@type': 'FAQPage',
+        mainEntity: SEO_FAQS.map((faq) => ({
+          '@type': 'Question',
+          name: faq.question,
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: faq.answer,
+          },
+        })),
+      },
+    ],
   };
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-12">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
       />
-      <div className="space-y-2">
-        <h1 className="text-4xl font-bold">Game Park</h1>
-        <p className="text-muted-foreground text-lg">다양한 웹 게임을 즐길 수 있는 플랫폼</p>
-      </div>
+      <section className="max-w-3xl space-y-5">
+        <div className="space-y-3">
+          <p className="text-muted-foreground text-sm font-medium">{SITE_TAGLINE}</p>
+          <h1 className="text-4xl font-bold tracking-tight md:text-5xl">{SITE_HERO_TITLE}</h1>
+          <p className="text-muted-foreground text-lg leading-8">{SITE_HERO_DESCRIPTION}</p>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {['직장인 심심할 때', '설치 없는 게임', '쉬는 시간 미니게임', '월루 게임'].map(
+            (keyword) => (
+              <span
+                key={keyword}
+                className="bg-secondary text-secondary-foreground rounded-full px-3 py-1 text-sm"
+              >
+                {keyword}
+              </span>
+            ),
+          )}
+        </div>
+
+        <div className="flex flex-wrap gap-3">
+          <Button asChild>
+            <Link href="/games">바로 게임하기</Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link href="/rankings">랭킹 보기</Link>
+          </Button>
+        </div>
+      </section>
+
+      <section className="mt-12 grid gap-4 md:grid-cols-3">
+        {[
+          {
+            title: '점심시간에 짧게',
+            description: '긴 튜토리얼 없이 바로 시작하는 브라우저 미니게임을 모았습니다.',
+          },
+          {
+            title: '설치 없이 가볍게',
+            description: '회사 PC에서도 다운로드 없이 웹에서 바로 열고 플레이할 수 있습니다.',
+          },
+          {
+            title: '랭킹으로 동기부여',
+            description: '짧게 즐기면서 최고 점수에 도전하고 인기 게임을 빠르게 찾으세요.',
+          },
+        ].map((item) => (
+          <article key={item.title} className="rounded-lg border p-5">
+            <h2 className="text-lg font-semibold">{item.title}</h2>
+            <p className="text-muted-foreground mt-2 text-sm leading-6">{item.description}</p>
+          </article>
+        ))}
+      </section>
 
       {popularGames.length > 0 && (
         <section className="mt-12">
           <div className="mb-6 flex items-center justify-between">
-            <h2 className="text-2xl font-bold">인기 게임</h2>
+            <div>
+              <h2 className="text-2xl font-bold">지금 하기 좋은 인기 미니게임</h2>
+              <p className="text-muted-foreground mt-1 text-sm">
+                직장인 쉬는 시간에 부담 없이 시작하기 좋은 게임입니다.
+              </p>
+            </div>
             <Button variant="ghost" asChild>
               <Link href="/games">전체보기</Link>
             </Button>
@@ -93,6 +176,62 @@ export default async function HomePage() {
           </div>
         </section>
       )}
+
+      <section className="mt-12">
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div className="space-y-2">
+            <p className="text-muted-foreground text-sm font-medium">Game Park 편집팀</p>
+            <h2 className="text-2xl font-bold">게임 규칙부터 초보 전략까지</h2>
+            <p className="text-muted-foreground max-w-2xl text-sm leading-6">
+              실제 게임의 조작과 규칙을 기준으로 처음 막히는 부분을 한국어로 정리했습니다.
+            </p>
+          </div>
+          <Button variant="outline" asChild>
+            <Link href="/guides">모든 가이드 보기</Link>
+          </Button>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {GAME_GUIDES.slice(0, 3).map((guide) => (
+            <article key={guide.slug} className="flex flex-col rounded-lg border p-5">
+              <div className="text-muted-foreground flex gap-3 text-xs">
+                <span>{guide.difficulty}</span>
+                <span>{guide.readingTime}</span>
+              </div>
+              <h3 className="mt-3 text-lg leading-7 font-semibold">
+                <Link href={`/guides/${guide.slug}`} className="hover:underline">
+                  {guide.title}
+                </Link>
+              </h3>
+              <p className="text-muted-foreground mt-2 flex-1 text-sm leading-6">{guide.summary}</p>
+              <Link
+                href={`/guides/${guide.slug}`}
+                className="mt-4 text-sm font-medium underline-offset-4 hover:underline"
+              >
+                가이드 읽기
+              </Link>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="mt-12">
+        <div className="mb-6 space-y-2">
+          <h2 className="text-2xl font-bold">자주 묻는 질문</h2>
+          <p className="text-muted-foreground text-sm">
+            Game Park를 처음 찾는 직장인 사용자가 자주 묻는 질문입니다.
+          </p>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-3">
+          {SEO_FAQS.map((faq) => (
+            <article key={faq.question} className="rounded-lg border p-5">
+              <h3 className="font-semibold">{faq.question}</h3>
+              <p className="text-muted-foreground mt-2 text-sm leading-6">{faq.answer}</p>
+            </article>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
