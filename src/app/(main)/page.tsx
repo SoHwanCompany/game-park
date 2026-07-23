@@ -1,3 +1,4 @@
+import { GAME_GUIDES } from '@/content/game-guides';
 import { type Metadata } from 'next';
 import { unstable_cache } from 'next/cache';
 import Image from 'next/image';
@@ -175,6 +176,44 @@ export default async function HomePage() {
           </div>
         </section>
       )}
+
+      <section className="mt-12">
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div className="space-y-2">
+            <p className="text-muted-foreground text-sm font-medium">Game Park 편집팀</p>
+            <h2 className="text-2xl font-bold">게임 규칙부터 초보 전략까지</h2>
+            <p className="text-muted-foreground max-w-2xl text-sm leading-6">
+              실제 게임의 조작과 규칙을 기준으로 처음 막히는 부분을 한국어로 정리했습니다.
+            </p>
+          </div>
+          <Button variant="outline" asChild>
+            <Link href="/guides">모든 가이드 보기</Link>
+          </Button>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {GAME_GUIDES.slice(0, 3).map((guide) => (
+            <article key={guide.slug} className="flex flex-col rounded-lg border p-5">
+              <div className="text-muted-foreground flex gap-3 text-xs">
+                <span>{guide.difficulty}</span>
+                <span>{guide.readingTime}</span>
+              </div>
+              <h3 className="mt-3 text-lg leading-7 font-semibold">
+                <Link href={`/guides/${guide.slug}`} className="hover:underline">
+                  {guide.title}
+                </Link>
+              </h3>
+              <p className="text-muted-foreground mt-2 flex-1 text-sm leading-6">{guide.summary}</p>
+              <Link
+                href={`/guides/${guide.slug}`}
+                className="mt-4 text-sm font-medium underline-offset-4 hover:underline"
+              >
+                가이드 읽기
+              </Link>
+            </article>
+          ))}
+        </div>
+      </section>
 
       <section className="mt-12">
         <div className="mb-6 space-y-2">

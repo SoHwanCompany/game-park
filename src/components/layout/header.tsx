@@ -35,14 +35,20 @@ export const Header = async () => {
           Game Park
         </Link>
 
-        <nav className="flex items-center gap-4">
+        <nav className="flex items-center gap-2 sm:gap-4">
           <Link href="/games" className="text-muted-foreground hover:text-foreground text-sm">
             게임
+          </Link>
+          <Link href="/guides" className="text-muted-foreground hover:text-foreground text-sm">
+            가이드
           </Link>
           <Link href="/rankings" className="text-muted-foreground hover:text-foreground text-sm">
             랭킹
           </Link>
-          <Link href="/feedback" className="text-muted-foreground hover:text-foreground text-sm">
+          <Link
+            href="/feedback"
+            className="text-muted-foreground hover:text-foreground hidden text-sm md:inline"
+          >
             의견
           </Link>
 

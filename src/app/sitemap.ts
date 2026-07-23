@@ -1,3 +1,4 @@
+import { GAME_GUIDES } from '@/content/game-guides';
 import { type MetadataRoute } from 'next';
 
 import { prisma } from '@/lib/prisma';
@@ -13,6 +14,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   });
 
   const latestGameUpdatedAt = publishedGames[0]?.updatedAt ?? new Date();
+  const editorialUpdatedAt = new Date('2026-07-23T00:00:00.000Z');
 
   const staticEntries: MetadataRoute.Sitemap = [
     {
@@ -35,7 +37,37 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
     {
       url: `${SITE_URL}/privacy`,
-      lastModified: latestGameUpdatedAt,
+      lastModified: editorialUpdatedAt,
+      changeFrequency: 'monthly',
+      priority: 0.4,
+    },
+    {
+      url: `${SITE_URL}/guides`,
+      lastModified: editorialUpdatedAt,
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    },
+    {
+      url: `${SITE_URL}/about`,
+      lastModified: editorialUpdatedAt,
+      changeFrequency: 'monthly',
+      priority: 0.5,
+    },
+    {
+      url: `${SITE_URL}/editorial-policy`,
+      lastModified: editorialUpdatedAt,
+      changeFrequency: 'monthly',
+      priority: 0.4,
+    },
+    {
+      url: `${SITE_URL}/terms`,
+      lastModified: editorialUpdatedAt,
+      changeFrequency: 'monthly',
+      priority: 0.3,
+    },
+    {
+      url: `${SITE_URL}/contact`,
+      lastModified: editorialUpdatedAt,
       changeFrequency: 'monthly',
       priority: 0.4,
     },
@@ -63,5 +95,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
-  return [...staticEntries, ...gameEntries, ...categoryEntries];
+  const guideEntries: MetadataRoute.Sitemap = GAME_GUIDES.map((guide) => ({
+    url: `${SITE_URL}/guides/${guide.slug}`,
+    lastModified: new Date(`${guide.updatedAt}T00:00:00.000Z`),
+    changeFrequency: 'monthly',
+    priority: 0.7,
+  }));
+
+  return [...staticEntries, ...gameEntries, ...guideEntries, ...categoryEntries];
 }
