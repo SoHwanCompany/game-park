@@ -8,7 +8,8 @@ import Script from 'next/script';
 type GtagCommand =
   | ['js', Date]
   | ['config', string, Record<string, unknown>?]
-  | ['event', string, Record<string, unknown>?];
+  | ['event', string, Record<string, unknown>?]
+  | ['consent', 'default' | 'update', Record<string, unknown>];
 
 declare global {
   interface Window {
@@ -65,6 +66,15 @@ export const AnalyticsProvider = ({ gaMeasurementId }: AnalyticsProviderProps) =
           {`
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
+            gtag('consent', 'default', {
+              ad_storage: 'denied',
+              ad_user_data: 'denied',
+              ad_personalization: 'denied',
+              analytics_storage: 'denied',
+              functionality_storage: 'granted',
+              security_storage: 'granted',
+              wait_for_update: 500
+            });
             gtag('js', new Date());
             gtag('config', '${gaMeasurementId}', { send_page_view: false });
           `}
